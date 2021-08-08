@@ -1,0 +1,3 @@
+[submodule "lib/libs"]
+	path = lib/libs
+	url = https://github.com/marekmaskarinec/libs

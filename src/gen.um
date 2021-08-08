@@ -1,0 +1,149 @@
+
+import (
+	"../lib/libs/list.um"
+	"../lib/libs/strings.um"
+)
+
+type Gen* = struct {
+	prototypes: []str
+	buf: strings.builder
+	main_fn: strings.builder
+	indent: str
+	in_block: bool
+
+	lno: int
+}
+
+fn (g: ^Gen) write(value: str) {
+	if g.in_block {
+		g.buf.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
+		g.buf.write_str(value)
+	} else {
+		g.main_fn.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
+		g.main_fn.write_str(value)
+	}
+}
+
+fn (g: ^Gen) lower_indent() {
+	if len(g.indent) > 1 {
+		g.indent = slice(g.indent, 1, len(g.indent))
+	} else {
+		g.indent = ""
+	}
+}
+
+fn (g: ^Gen) push_simple(value: interface{}, type_str: str, side: str, offset: int) {
+	g.write(g.indent + "{\n"+
+		g.indent + "\t" + type_str + " tmp = " + repr(value) + ";\n" +
+		g.indent + "\t" + "memcpy(&tmp_cell.data, &tmp, sizeof(" + type_str + "));\n" +
+		g.indent + "\t" + "tmp_cell.type = kk_type_" + strings.trimprefix(type_str, "kk_") + ";\n" +
+		g.indent + "\t" + "kk_list_push_" + side + "(&the_stack, tmp_cell, " + repr(offset) + ");\n" +
+		g.indent + "}\n\n")
+}
+
+fn (g: ^Gen) push_string(value, side: str, offset: int) {
+	g.write(g.indent + "{\n"+
+		g.indent + "\t" + "kk_char *tmp = malloc(" + repr(len(value) + 1) + ");\n" +
+		g.indent + "\t" + "if (!tmp) kk_runtime_error(\"Failed to allocate string.\");\n" +
+		g.indent + "\t" + "tmp[" + repr(len(value)) + "] = 0;\n" +
+		g.indent + "\t" + "strcpy(tmp, \"" + value + "\");\n" + 
+		g.indent + "\t" + "kk_gcobj *tmpobj = malloc(sizeof(kk_gcobj));\n" +
+		g.indent + "\t" + "if (!tmpobj) kk_runtime_error(\"Failed to allocate gc object.\");\n" +
+		g.indent + "\t" + "tmpobj->type = kk_type_string; tmpobj->refs = 0; tmpobj->data = tmp;\n" +
+		g.indent + "\t" + "tmp_cell.data = tmpobj;\n" +
+		g.indent + "\t" + "tmp_cell.type= kk_type_gcobj;\n" + 
+		g.indent + "\t" + "kk_list_push_" + side + "(&the_stack, tmp_cell, " + repr(offset) + ");\n" +
+		g.indent + "}\n\n")
+}
+
+fn (g: ^Gen) pop(n: int) {
+	g.write(g.indent + "kk_list_popn(&the_stack, " + repr(n) + ");\n\n")
+}
+
+fn (g: ^Gen) assign(name: str) {
+	g.write(g.indent + "kk_cell_copy(&__USER__VAR_" + name + ", &the_stack->cell);\n")
+	g.pop(1)
+}
+
+fn (g: ^Gen) decl(name: str) {
+	g.write(g.indent + "kk_cell __USER__VAR_" + name + " = {0};\n\n")
+}
+
+fn (g: ^Gen) word_decl(name: str) {
+	g.buf.write_str("void __USER__WORD_" + name + "()")
+}
+
+fn (g: ^Gen) constant(name: str) {
+	if name == "t" {
+		g.push_simple("!NULL", "kk_const", "front", 0)
+	} else {
+		g.push_simple("NULL", "kk_const", "front", 0)
+	}
+}
+
+fn (g: ^Gen) call_builtin(name: str) {
+	g.write(g.indent + "kk__BUILTIN_" + name + "();\n\n")
+}
+
+fn (g: ^Gen) call_user_word(name: str) {
+	g.write(g.indent + "__USER__WORD_" + name + "();\n\n")
+}
+
+fn (g: ^Gen) push_variable(name: str) {
+	g.write(g.indent + "kk_list_push_front(&the_stack, __USER__VAR_" + name + ", 0);\n\n")
+}
+
+fn (g: ^Gen) open() {
+	g.in_block = true
+	g.lower_indent()
+	g.write(" {\n")
+}
+
+fn (g: ^Gen) close() {
+	g.write("}\n\n")
+	g.in_block = false
+	g.indent += "\t"
+}
+
+fn (g: ^Gen) if_cond() {
+	g.write(
+		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
+		g.indent + "if ((kk_int)(tmp_cell.data) != 0) {\n")
+
+	g.indent += "\t"
+}
+
+fn (g: ^Gen) else_cond() {
+	g.lower_indent()
+	g.write(g.indent + "} else {\n")
+	g.indent += "\t"
+}
+
+fn (g: ^Gen) fi_cond() {
+	g.lower_indent()
+	g.write(g.indent + "}\n\n")
+}
+
+fn (g: ^Gen) gc_var(name: str) {
+	name = "__USER__VAR_" + name
+	g.write(
+		g.indent + "if (" + name + ".type == kk_type_gcobj)\n" +
+		g.indent + "\t" + "kk_gcobj_dec((kk_gcobj *)" + name + ".data);\n")
+}
+
+fn (g: ^Gen) gc(vars: list.List): list.List {
+	for node:=vars.front;
+		node != null && ^str(node.value)^ != "ENTER_SCOPE";
+		node=vars.front {
+
+		g.gc_var(^str(node.value)^)
+		vars.remove(vars.front)
+	}
+
+	return vars
+}
+
+fn (g: ^Gen) print() {
+	printf("%s\n", g.buf.to_str())
+	printf("int main() {\n%s\n}\n", g.main_fn.to_str())
+}

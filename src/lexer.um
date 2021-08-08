@@ -1,0 +1,239 @@
+
+import (
+	"std.um"
+	"../lib/libs/strings.um"	
+)
+
+type Lexer* = struct {
+	buf: str
+	pos: int
+	lineno: int
+	charno: int
+}
+
+const (
+	tok_null* = 0
+	tok_literal_char*
+	tok_literal_char_word*
+	tok_literal_char_number*
+	tok_literal_string*
+	tok_var_assign*
+	tok_word*
+	tok_push_front*
+	tok_push_back*
+	tok_propagate*
+	tok_constant*
+	tok_keyword*
+	tok_int*
+	tok_int_hex*
+	tok_decimal*
+	tok_eof*
+	tok_var_decl*
+	tok_pop*
+	tok_lambda_open*
+	tok_lambda_close*
+)
+
+type Token* = struct {
+	v: str
+	t: int
+	lineno: int
+	charno: int
+	num_mod: int
+}
+
+fn is_number(c: char): bool {
+	return (c >= '0' && c <= '9') || c == '.' || c == '/'
+}
+
+fn fix_ident(inp: str): str {
+	inp = strings.tolower(inp)
+	inp = strings.replace(inp, "+", "__PLUS__")
+	inp = strings.replace(inp, "-", "__MINUS__")
+	inp = strings.replace(inp, "*", "__MUL__")
+	inp = strings.replace(inp, "/", "__DIV__")
+	inp = strings.replace(inp, "%", "__MOD__")
+	inp = strings.replace(inp, "=", "__EQUAL__")
+	inp = strings.replace(inp, "<", "__SMALLER__")
+	inp = strings.replace(inp, ">", "__GREATER__")
+	inp = strings.replace(inp, "!", "__NOT__")
+	inp = strings.replace(inp, "~", "__XOR__")
+	inp = strings.replace(inp, "&", "__AND__")
+	inp = strings.replace(inp, "|", "__OR__")
+	return inp
+}
+
+fn get_number_type(inp: str): int {
+	if strings.contains(inp, ".") {
+		return tok_decimal
+	}
+
+	if len(inp) > 2 && inp[1] == 'x' {
+		return tok_int_hex
+	}
+
+	return tok_int
+}
+
+fn (l: ^Lexer) peek_char(): char {
+	if l.pos + 1 >= len(l.buf) {
+		return char(0)
+	}
+
+	return l.buf[l.pos+1]
+}
+
+fn (l: ^Lexer) next_char(): char {
+	l.pos++
+	l.charno++
+	if l.pos >= len(l.buf) {
+		return char(0)
+	}
+
+	return l.buf[l.pos]
+}
+
+fn (l: ^Lexer) get_before(b: char): str {
+	out := ""
+	for c := l.peek_char(); c != b && c != '\n' && c != '\0'; c = l.peek_char() {
+		out += str(c)
+		c = l.next_char()
+	}
+	return out
+}
+
+fn (l: ^Lexer) next(): Token {
+	for c := l.peek_char(); c == ' ' || c == '\n'; c = l.peek_char() {
+		if c == '\n' {
+			l.lineno++
+		}
+		c = l.next_char()
+	}
+
+	tok := Token{ "", tok_null, l.lineno, l.charno, 1 }
+	switch l.peek_char() {
+	case '#':
+		tok.v = l.get_before(' ')
+		if len(tok.v) == 2 || tok.v[1] == '\\'{
+			tok.t = tok_literal_char
+		} else {
+			tok.t = tok_literal_char_word
+			tok.v = fix_ident(tok.v)
+		}
+		tok.v = slice(tok.v, 1, len(tok.v))
+	case '\'':
+		tok.v = l.get_before(' ')
+		tok.v = slice(tok.v, 1, len(tok.v))
+		tok.t = tok_literal_char_number
+	case '"':
+		l.next_char()
+		tok.v = l.get_before('"')
+		tok.t = tok_literal_string
+		l.next_char()
+	case '.':
+		tok.v = l.get_before(' ')
+		if len(tok.v) == 1 {
+			tok.t = tok_pop
+		} else {
+			tok.v = fix_ident(slice(tok.v, 1, len(tok.v)))
+			tok.t = tok_var_assign
+		}
+	case ':':
+		tok.v = l.get_before(' ')
+		if len(tok.v) > 1 {
+			tok.v = fix_ident(slice(tok.v, 1, len(tok.v)))
+			tok.t = tok_var_decl
+		}
+	case '<':
+		tok.v = l.get_before(' ')
+		if len(tok.v) == 1 {
+			tok.t = tok_word
+			tok.v = fix_ident(tok.v)
+		} else {
+			tok.t = tok_push_front
+		}
+	case '>':
+		tok.v = l.get_before(' ')
+		if len(tok.v) == 1 {
+			tok.t = tok_word
+			tok.v = fix_ident(tok.v)
+		} else {
+			tok.t = tok_push_back
+		}
+	case '^':
+		tok.v = l.get_before(' ')
+		if len(tok.v) == 2 {
+			tok.t = tok_propagate
+		}
+	case '\0':
+		tok.t = tok_eof
+	case '{':
+		tok.v = l.get_before(' ')
+		tok.t = tok_lambda_open
+	case '}':
+		tok.v = l.get_before(' ')
+		tok.t = tok_lambda_close
+	default:
+		tok.v = fix_ident(l.get_before(' '))
+
+		if is_number(tok.v[0]) {
+			whole_num := true
+			for i, c in tok.v {
+				if i == 1 && c == 'x' {
+					break
+				}
+
+				if !is_number(c) {
+					whole_num = false
+					break
+				}
+			}
+
+			if whole_num {
+				tok.t = get_number_type(tok.v)
+			} else {
+				l.pos -= len(tok.v)
+				l.lineno = tok.lineno
+				l.charno = tok.charno
+        
+				num := ""
+				for i:=0; is_number(tok.v[i]); i++ {
+					l.pos++
+					l.charno++
+					num += str(tok.v[i])
+				}
+        
+				tok2 := l.next()
+        
+				tok.v = tok2.v
+				tok.t = tok2.t
+				tok.num_mod = std.atoi(num)
+			}
+		} else if tok.v == "t" || tok.v == "n" {
+			tok.t = tok_constant
+		} else if strings.contains("if else then fi loop pool mkw", tok.v) {
+			tok.t = tok_keyword
+		} else {
+			tok.t = tok_word
+		}
+	}
+
+	return tok
+}
+
+fn (l: ^Lexer) peek(): Token {
+	lno := l.lineno
+	cno := l.charno
+	pos := l.pos
+	t := l.next()
+	l.lineno = lno
+	l.charno = cno
+	l.pos = pos
+
+	return t
+}
+
+fn (t: ^Token) print() {
+	types := []str{"null", "char", "word-repr-char", "num-repr-char", "string", "var assignement", "word", "push-front", "push-back", "propagate", "constant", "keyword", "int", "hex-int", "decimal", "eof", "var-declaration", "pop", "lopen", "lclose"}
+	printf("Token: { type: %s, value: \"%s\", pos: (%d, %d), mod: %d }\n", types[t.t], t.v, t.lineno, t.charno, t.num_mod)
+}

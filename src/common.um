@@ -1,0 +1,41 @@
+
+import (
+	"../lib/libs/strings.um"
+)
+
+fn hash*(s: str): uint32 {  // djb2 hash    
+    var hash: uint32 = 5381;
+    for ch in s {
+        hash = (((hash << 5) + hash) + uint32(ch)) & 0xFFFFFFFF;
+    }
+    return hash;
+}
+
+fn errorf*(msg: str, values: []interface{}, lineno, charno: int) {
+    b := strings.mk_builder()
+    split := strings.split(msg, "~a")
+
+    if len(values) != len(split) - 1 {
+        error("incorrect number of values to errorf")
+    }
+
+    for i:=0; i < len(values); i++ {
+        b.write_str(split[i] + repr(values[i]))
+    }
+    b.write_str(split[len(split)-1])
+
+    printf("error: %s (%d, %d)\n", b.to_str(), lineno, charno)
+}
+
+fn pow*(a, b: int): int {
+	if b == 0 {
+		return 1
+	}
+
+	sum := a
+	for i:=1; i < b; i++ {
+		sum *= a	
+	}
+
+	return sum
+}

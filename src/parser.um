@@ -1,0 +1,256 @@
+
+import (
+	"std.um"
+	"gen.um"	
+	"lexer.um"
+	"common.um"
+	"../lib/libs/list.um"
+)
+
+type ErrArgs = []interface{}
+
+type Parser* = struct {
+	l: lexer.Lexer
+	g: gen.Gen
+
+	err_fn: fn(msg: str, values: []interface{}, lineno, charno: int)
+	lno: int
+	cno: int
+	had_error: bool
+
+	words: []str
+	builtins: []str
+
+	in_if: int
+
+	variables: list.List
+}
+
+fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool
+
+fn (p: ^Parser) err(msg: str, args: ErrArgs) {
+	p.had_error = true
+
+	p.err_fn(msg, args, p.lno, p.cno)
+}
+
+fn (p: ^Parser) is_builtin(word: str): bool {
+	for w in p.builtins {
+		if w == word {
+			return true
+		}
+	}
+
+	return false
+}
+
+fn (p: ^Parser) is_user_word(word: str): bool {
+	for w in p.words {
+		if w == word {
+			return true
+		}
+	}
+
+	return false
+}
+
+fn (p: ^Parser) is_variable(word: str): bool {
+	for node:=p.variables.front; node != null; node=node.next {
+		if word == ^str(node.value)^ {
+			return true
+		}
+	}
+
+	return false
+}
+
+// TODO: do this in more elegant way
+fn (p: ^Parser) decode_char_word(word: str): char {
+	if word == "space" {
+		return ' '
+	}
+
+	if word == "newline" {
+		return '\n'
+	}
+
+	p.err("Incorrect char word ~a.", ErrArgs{word})
+	return '\0'
+}
+
+fn (p: ^Parser) hex_to_int(hex: str): int {
+	sum := 0
+
+	for i:=len(hex)-1; i >= 0; i-- {
+		char_val := 0
+
+		if hex[i] >= '0' && hex[i] <= '9' {
+			char_val = int(hex[i]) - int('0')
+		} else if hex[i] >= 'a' && hex[i] <= 'f' {
+			char_val = int(hex[i]) - int('a') + 10
+		} else {
+			p.err("Incorrect hex number ~a.", ErrArgs{hex})
+		}
+
+		sum += char_val * common.pow(16, (len(hex) - i - 1))
+	}
+
+	return sum
+}
+
+fn (p: ^Parser) parse_mkw() {
+	t := p.l.next()
+
+	if t.t != lexer.tok_word {
+		p.err("Expected word.", ErrArgs{})
+		return
+	}
+
+	exists := false
+	for w in p.words {
+		if w == t.v {
+			exists = true
+			break
+		}
+	}
+
+	if !exists {
+		p.words = append(p.words, t.v)
+	}
+
+	p.g.word_decl(t.v)
+
+	t = p.l.peek()
+	if t.t != lexer.tok_lambda_open {
+		p.g.buf.write_str(";\n")
+	}
+}
+
+fn (p: ^Parser) parse_if() {
+	p.variables.push_front("ENTER_SCOPE")
+	for p.parse_next(lexer.tok_keyword, "then") && !p.had_error { }
+	p.variables = p.g.gc(p.variables)
+
+	p.variables.push_front("ENTER_SCOPE")
+	p.g.if_cond()
+	p.in_if++
+}
+
+fn (p: ^Parser) parse_else() {
+	if p.in_if == 0 {
+		p.err("Unexpected else. Not in a statement.", ErrArgs{})
+	}
+
+	p.g.else_cond()
+}
+
+fn (p: ^Parser) parse_fi() {
+	if p.in_if == 0 {
+		p.err("Unexpected fi. Not in a statement.", ErrArgs{})
+	}
+
+	p.in_if--
+	p.variables = p.g.gc(p.variables)
+	p.g.fi_cond()
+}
+
+fn (p: ^Parser) parse_keyword(kw: str) {
+	if kw == "mkw" {
+		p.parse_mkw()
+	} else if kw == "if" {
+		p.parse_if()
+	} else if kw == "else" {
+		p.parse_else()
+	} else if kw == "fi" {
+		p.parse_fi()
+	}
+}
+
+fn (p: ^Parser) parse_word(word: str) {
+	if p.is_builtin(word) {
+		p.g.call_builtin(word)
+	} else if p.is_user_word(word) {
+		p.g.call_user_word(word)
+	} else if p.is_variable(word) {
+		p.g.push_variable(word)
+	} else {
+		p.err("Unknown identifier ~a.", ErrArgs{word})
+	}
+}
+
+fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool {
+	tok := p.l.next()	
+	//tok.print()
+
+	p.g.lno = p.lno
+
+	if tok.t == stop && stop_str == tok.v {
+		return false
+	}
+
+	p.lno = tok.lineno
+	p.cno = tok.charno
+
+	switch tok.t {
+	case lexer.tok_literal_char:
+		p.g.push_simple(tok.v, "kk_char", "front", 0)
+
+	case lexer.tok_literal_char_word:
+		val := p.decode_char_word(tok.v)
+		p.g.push_simple(val, "kk_char", "front", 0)
+	
+	case lexer.tok_literal_char_number:
+		p.g.push_simple(char(p.hex_to_int(tok.v)), "kk_char", "front", 0)
+	
+	case lexer.tok_int:
+		p.g.push_simple(std.atoi(tok.v), "kk_int", "front", 0)
+
+	case lexer.tok_int_hex:
+		p.g.push_simple(
+			p.hex_to_int(slice(tok.v, 2, len(tok.v))),
+			"kk_int", "front", 0)
+
+	case lexer.tok_pop:
+		p.g.pop(tok.num_mod)
+
+	case lexer.tok_var_assign:
+		if !p.is_variable(tok.v) {
+			p.err("Unknown identifier ~a.", ErrArgs{tok.v})
+		}
+		p.g.assign(tok.v)
+
+	case lexer.tok_var_decl:
+		if p.is_variable(tok.v) {
+			p.err("Variable ~a already exists.", ErrArgs{tok.v})
+		}
+		p.g.decl(tok.v)	
+		p.variables.push_front(tok.v)
+
+	case lexer.tok_literal_string:
+		p.g.push_string(tok.v, "front", 0)
+
+	case lexer.tok_keyword:
+		p.parse_keyword(tok.v)
+
+	case lexer.tok_lambda_open:
+		p.g.open()
+		p.variables.push_front("ENTER_FUNCTION")
+		p.variables.push_front("ENTER_SCOPE")
+
+	case lexer.tok_lambda_close:
+		p.g.close()
+		p.variables = p.g.gc(p.variables)
+
+	case lexer.tok_constant:
+		p.g.constant(tok.v)
+
+	case lexer.tok_word:
+		p.parse_word(tok.v)
+
+	default:
+		p.err("Unimplemented feature ~a.", ErrArgs{tok.t})
+		tok.print()
+	}
+
+	return true
+}
