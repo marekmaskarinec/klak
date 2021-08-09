@@ -22,7 +22,7 @@
 	- [ ] - 4l's iter
 - [x] - int
 - [x] - hex int
-- [ ] - float
+- [x] - float
 - [x] - eof
 - [x] - var declaration
 	- [x] - c gen
@@ -42,6 +42,8 @@
 - [ ] - lists
 - [ ] - hashmaps
 - [ ] - arrays
+- [ ] - file including
+- [ ] - macros?
 
 # standard functions
 

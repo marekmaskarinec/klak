@@ -102,6 +102,21 @@ fn (p: ^Parser) hex_to_int(hex: str): int {
 	return sum
 }
 
+fn is_float_valid(num: str): bool {
+	dotc := 0
+
+	for i, c in num {
+		if c == '.' {
+			dotc++
+			if i == 0 {
+				return false
+			}
+		}
+	}
+
+	return dotc <= 1
+}
+
 fn (p: ^Parser) parse_mkw() {
 	t := p.l.next()
 
@@ -235,6 +250,14 @@ fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool {
 		p.g.push_simple(
 			p.hex_to_int(slice(tok.v, 2, len(tok.v))),
 			"kk_type_int", "front", 0)
+
+	case lexer.tok_float:
+		if !is_float_valid(tok.v) {
+			p.err("Invalid float number.", ErrArgs{})
+		}
+
+		float_val := std.atof(tok.v)
+		p.g.push_simple(float_val, "kk_type_float", "front", 0)
 
 	case lexer.tok_pop:
 		p.g.pop(tok.num_mod)

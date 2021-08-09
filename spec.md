@@ -2,7 +2,7 @@
 
 ## introduction
 
-Klak is a dynamically-typed, stack oriented language with manual memory management.
+Klak is a dynamically-typed, stack oriented, garbage collected language.
 There is a stack (called the stack), values can be pushed to, poped from, or used as arguments to functions.
 It is case insensitive and itentifiers are lowercased.
 Everything is separated by 1 >= spaces.
@@ -16,7 +16,7 @@ They can't be the same as any of the keywords.
 
 ## literals
 
-Literals have value without being evaluated.
+Literals automatically push themselves to the stack.
 
 ### numbers
 
@@ -43,14 +43,10 @@ Examples:
 ### strings
 
 Same as in other languages, strings literals are enclosed in ".
-They can contain ascii characters, but also character literals embedded into them.
-\# can be written by writing it two times like this `##`.
 
-Examples:
+Example:
 ```
 "hello world!"
-
-"hello#newlinenewline"
 ```
 
 ## stack operators
@@ -59,9 +55,9 @@ Some operators (not only the stack ones) can be prefixed with a number. If none 
 
 ### (n).
 
-Pop the n items from left of the stack.
+Pop n items from left of the stack.
 
-### (n)\<word/literal
+### (n)\<word/literal (WIP)
 
 Push value of the word to (nth place from) the left of the stack.
 It is implicitly added.
@@ -76,14 +72,14 @@ Is same as
 <5 <2 <1
 ```
 
-### (n)>word/literal
+### (n)>word/literal (WIP)
 
 Same as <, but to the right.
 
-## comments
+## comments (WIP)
 
-Comments start with `#`.
-Block comments are done by adding a number after `#`.
+Comments start with `;`.
+Block comments are done by adding a number after `;`.
 That number marks, how many lines are commented.
 Blocks **aren't** nested.
 
@@ -95,9 +91,9 @@ One cell is 8 bytes, but can be less on some systems.
 ### numbers
 
 There are integers, decimals and fractions.
-Ints are 64-bit (`long long int`), decimals are 64-bit too (`double`) and fractions are made of two 32-bit ints.
+Ints are 64-bit (`long long int`), decimals are 64-bit too (`double`) and fractions (WIP) are made of two 32-bit ints.
 
-### arrays
+### arrays (WIP)
 
 Arrays are of fixed length (which can be determined at runtime).
 They are passed by reference.
@@ -107,18 +103,18 @@ They are passed by reference.
 Strings are null terminated blocks of memory.
 Same as arrays, they are passed by reference.
 
-### lists
+### lists (WIP)
 
 Linked lists.
 They have similar operators to the stack, but prefixed with `l`.
 They are passed by reference.
 
-### tables
+### tables (WIP)
 
 They can store any kind of value and use any kind of value as a key.
 They are passed by reference.
 
-### opaque
+### opaque (WIP)
 
 Data, user doesn't know how works like c's `FILE`.
 They are passed by reference.
@@ -143,47 +139,73 @@ It pops and assigns the last value.
 
 ## scopes
 
-The stack is scope by making a copy of itself on enter, however you can propagate is using `^^`.
-In functions, only first n elements of stack are copied.
 Variables are scoped same as in c.
-
-## built-in constants
-
-```
-t n
-```
-
-Zero is `n` and `n` is zero.
-Every non-`n` value is `t`.
+The stack is global.
 
 ## control flow
 
 ### if
 
 Similar to other languages.
-The code between `if` and `then` is evaluated on test and if the top of the stack is `t`, block is executed.
+The code between `if` and `then` is evaluated on test and if the top of the stack is not 0, block is executed.
 
 Example:
 ```
 if  5 4 gt  then
 	"bigger#newline" n format
-else then
+else
 	"smaller#newline" n format
 fi
 ```
 
 ### loop
 
-Loop evaluates everyting before `then` and if the stack-front is `t`, it executes the block.
+Loop evaluates everyting before `then` and if the stack-front is not 0, it executes the block.
 
 ```
 0 .i
 loop  10 i lt  then
-	i "~a " n format
+	i "~a " 0 format
+	i 1 + .i
 pool
-"#newline" n format
+"#newline" 0 format
 ```
 Will print numbers from 0 to 9.
+
+### switch
+
+Switch case like in c, but without fallthrough.
+
+```
+match  5  then
+	case  1  then
+		; i don't get executed
+	esac
+
+	case  5  then
+		; i get executed
+	esac
+
+	case     then
+		; when no case is found
+	esac
+hctam
+```
+
+### iter
+
+Iter like in 4l. You declare a variable and then push a variable.
+Optionally, you can provide second declaration.
+The first one is always index, the second one is value.
+
+```
+:my-array
+10 mka .my-array
+
+iter :i :v my-array then
+	i v "~a: ~a" 1 format
+reti
+```
 
 ### functions
 
@@ -303,9 +325,7 @@ cdr  # returns the lists cdr
 mkt  # makes a table
 tget # gets an element [ table key ]
 tset # sets an element [ table key value ]
-tcpy # copies a table even with its elements
 
-## memory management
-free # free (can free a list)
-cpy  # copies a value (can copy a list)
+## memory
+cpy
 ```

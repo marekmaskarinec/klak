@@ -26,7 +26,7 @@ const (
 	tok_keyword*
 	tok_int*
 	tok_int_hex*
-	tok_decimal*
+	tok_float*
 	tok_eof*
 	tok_var_decl*
 	tok_pop*
@@ -65,7 +65,7 @@ fn fix_ident(inp: str): str {
 
 fn get_number_type(inp: str): int {
 	if strings.contains(inp, ".") {
-		return tok_decimal
+		return tok_float
 	}
 
 	if len(inp) > 2 && inp[1] == 'x' {
@@ -234,6 +234,6 @@ fn (l: ^Lexer) peek(): Token {
 }
 
 fn (t: ^Token) print() {
-	types := []str{"null", "char", "word-repr-char", "num-repr-char", "string", "var assignement", "word", "push-front", "push-back", "propagate", "constant", "keyword", "int", "hex-int", "decimal", "eof", "var-declaration", "pop", "lopen", "lclose"}
+	types := []str{"null", "char", "word-repr-char", "num-repr-char", "string", "var assignement", "word", "push-front", "push-back", "propagate", "constant", "keyword", "int", "hex-int", "float", "eof", "var-declaration", "pop", "lopen", "lclose"}
 	printf("Token: { type: %s, value: \"%s\", pos: (%d, %d), mod: %d }\n", types[t.t], t.v, t.lineno, t.charno, t.num_mod)
 }
