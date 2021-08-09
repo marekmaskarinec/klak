@@ -39,25 +39,23 @@ fn (g: ^Gen) lower_indent() {
 }
 
 fn (g: ^Gen) push_simple(value: interface{}, type_str: str, side: str, offset: int) {
-	g.write(g.indent + "{\n"+
-		g.indent + "\t" + "tmp_cell.type = kk_type_" + strings.trimprefix(type_str, "kk_") + ";\n" +
-		g.indent + "\t" + "tmp_cell.int_val = " + repr(value) + ";\n" +
-		g.indent + "\t" + "kk_list_push_" + side + "(&the_stack, tmp_cell, " + repr(offset) + ");\n" +
-		g.indent + "}\n\n")
+	field := strings.trimprefix(type_str, "kk_type_") + "_val"
+	g.write(g.indent + "kk_list_push_" + side +
+		"(&the_stack, (kk_cell){ .type = " + type_str + ", ." +
+		field + " = " + repr(value) + "}, " + repr(offset) + ");\n\n")
 }
 
 fn (g: ^Gen) push_string(value, side: str, offset: int) {
 	g.write(g.indent + "{\n"+
-		g.indent + "\t" + "kk_char *tmp = malloc(" + repr(len(value) + 1) + ");\n" +
-		g.indent + "\t" + "if (!tmp) kk_runtime_error(\"Failed to allocate string.\");\n" +
-		g.indent + "\t" + "tmp[" + repr(len(value)) + "] = 0;\n" +
-		g.indent + "\t" + "strcpy(tmp, \"" + value + "\");\n" + 
-		g.indent + "\t" + "kk_gcobj *tmpobj = malloc(sizeof(kk_gcobj));\n" +
-		g.indent + "\t" + "if (!tmpobj) kk_runtime_error(\"Failed to allocate gc object.\");\n" +
-		g.indent + "\t" + "tmpobj->type = kk_type_string; tmpobj->refs = 0; tmpobj->data = tmp;\n" +
-		g.indent + "\t" + "tmp_cell.ptr_val = tmpobj;\n" +
-		g.indent + "\t" + "tmp_cell.type= kk_type_gcobj;\n" + 
-		g.indent + "\t" + "kk_list_push_" + side + "(&the_stack, tmp_cell, " + repr(offset) + ");\n" +
+		g.indent + "\t" + "kk_gcobj *tmp = malloc(sizeof(kk_gcobj));\n" +
+		g.indent + "\t" + "if (!tmp) kk_runtime_error(\"Could not allocate a gc object.\");\n" +
+		g.indent + "\t" + "tmp->type = kk_type_string; tmp->refs = 0; \n" +
+		g.indent + "\t" + "tmp->data = malloc(" + repr(len(value) + 1) + ");\n" +
+		g.indent + "\t" + "if (!tmp->data) kk_runtime_error(\"Could not allocate a string.\");\n" +
+		g.indent + "\t" + "((char *)tmp->data)[" + repr(len(value)) + "] = 0;\n" +
+		g.indent + "\t" + "strcpy(tmp->data, \"" + value + "\");\n" +
+		g.indent + "\t" + "kk_list_push_" + side + "(&the_stack, " +
+		"(kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);\n" +
 		g.indent + "}\n\n")
 }
 
@@ -110,8 +108,7 @@ fn (g: ^Gen) close() {
 
 fn (g: ^Gen) if_cond() {
 	g.write(
-		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
-		g.indent + "if (tmp_cell.int_val != 0) {\n")
+		g.indent + "if (kk_is_true(kk_list_popget(&the_stack))) {\n")
 
 	g.indent += "\t"
 }

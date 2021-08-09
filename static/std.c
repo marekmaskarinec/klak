@@ -8,12 +8,16 @@ typedef long long int kk_int;
 typedef unsigned long long int kk_uint;
 typedef double kk_float;
 typedef char kk_char;
+typedef char kk_bool;
 
 typedef enum {
 	kk_type_null,
 	kk_type_int,
+	kk_type_uint,
 	kk_type_float,
 	kk_type_gcobj,
+	kk_type_char,
+
 	kk_type_string,
 } kk_type;
 
@@ -24,6 +28,7 @@ typedef struct {
 		kk_float float_val;
 		void     *ptr_val;
 		kk_uint  uint_val;
+		kk_char  char_val;
 	};
 } kk_cell;
 
@@ -157,40 +162,48 @@ kk_cell kk_list_popget(kk_node **list) {
 	return out;
 }
 
+kk_bool kk_is_true(kk_cell cell) {
+	switch (cell.type) {
+	case kk_type_int:
+		return cell.int_val;
+	case kk_type_uint:
+		return cell.uint_val;
+	case kk_type_float:
+		return cell.float_val;
+	case kk_type_gcobj:
+		return ((kk_gcobj *)cell.ptr_val)->data > 0;
+	default:
+		return 0;
+	}
+
+	return 0;
+}
+
 void kk_BUILTIN___SMALLER__() {
 	kk_int a = kk_list_popget(&the_stack).int_val;
 	kk_int b = kk_list_popget(&the_stack).int_val;
+
+	printf("%d %d\n", a, b);
 
 	tmp_cell.type = kk_type_int;
 	tmp_cell.int_val = b < a;
 	kk_list_push_front(&the_stack, tmp_cell, 0);
 }
 
-
 int main() {
 	kk_line = 0 ;
 	{
-		tmp_cell.type = kk_type_int;
-		tmp_cell.int_val = 3 ;
-		kk_list_push_front(&the_stack, tmp_cell, 0 );
+		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
+		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
+		tmp->type = kk_type_string; tmp->refs = 0; 
+		tmp->data = malloc(17 );
+		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
+		((char *)tmp->data)[16 ] = 0;
+		strcpy(tmp->data, "a string literal");
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
 	}
 
-	kk_line = 0 ;
-	{
-		tmp_cell.type = kk_type_int;
-		tmp_cell.int_val = 5 ;
-		kk_list_push_front(&the_stack, tmp_cell, 0 );
-	}
-
-	kk_line = 0 ;
-	kk_BUILTIN___SMALLER__();
-
-	kk_line = 0 ;
-	if (kk_list_popget(&the_stack).int_val != 0) {
-		printf("it werks\n");
-	kk_line = 0 ;
-	}
-
+	printf("%s\n", (char *)((kk_gcobj *)the_stack->cell.ptr_val)->data);
 
 }
 

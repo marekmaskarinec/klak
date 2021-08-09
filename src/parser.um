@@ -196,22 +196,22 @@ fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool {
 
 	switch tok.t {
 	case lexer.tok_literal_char:
-		p.g.push_simple(tok.v, "kk_char", "front", 0)
+		p.g.push_simple(tok.v, "kk_type_char", "front", 0)
 
 	case lexer.tok_literal_char_word:
 		val := p.decode_char_word(tok.v)
-		p.g.push_simple(val, "kk_char", "front", 0)
+		p.g.push_simple(val, "kk_type_char", "front", 0)
 	
 	case lexer.tok_literal_char_number:
-		p.g.push_simple(char(p.hex_to_int(tok.v)), "kk_char", "front", 0)
+		p.g.push_simple(char(p.hex_to_int(tok.v)), "kk_type_char", "front", 0)
 	
 	case lexer.tok_int:
-		p.g.push_simple(std.atoi(tok.v), "kk_int", "front", 0)
+		p.g.push_simple(std.atoi(tok.v), "kk_type_int", "front", 0)
 
 	case lexer.tok_int_hex:
 		p.g.push_simple(
 			p.hex_to_int(slice(tok.v, 2, len(tok.v))),
-			"kk_int", "front", 0)
+			"kk_type_int", "front", 0)
 
 	case lexer.tok_pop:
 		p.g.pop(tok.num_mod)
