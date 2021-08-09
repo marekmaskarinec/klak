@@ -22,10 +22,10 @@ const (
 
 fn (g: ^Gen) write(value: str) {
 	if g.in_block {
-		g.buf.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
+		//g.buf.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
 		g.buf.write_str(value)
 	} else {
-		g.main_fn.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
+		//g.main_fn.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
 		g.main_fn.write_str(value)
 	}
 }
@@ -157,6 +157,37 @@ fn (g: ^Gen) loop_cond() {
 fn (g: ^Gen) pool() {
 	g.lower_indent()
 	g.write(g.indent + "}\n")
+}
+
+fn (g: ^Gen) case_header() {
+	g.write(
+		g.indent + "{\n" +
+		g.indent + "\t{\n")
+	g.indent += "\t\t"
+}
+
+fn (g: ^Gen) case_footer(nest: int) {
+	g.lower_indent()
+	g.write(
+		g.indent + "}\n\n" +
+		g.indent + "kk_cell case_tmp_" + repr(nest + 1) + " = kk_list_popget(&the_stack);\n" +
+		g.indent)
+}
+
+fn (g: ^Gen) on(nest: int) {
+	g.lower_indent()
+	g.write(
+		g.indent + "}\n" +
+		g.indent + "kk_list_push_front(&the_stack, case_tmp_" + repr(nest) + ", 0);\n" +
+		g.indent + "kk_BUILTIN___EQUAL__();\n" +
+		g.indent + "if (kk_is_true(kk_list_popget(&the_stack))) {\n")
+	g.indent += "\t"
+}
+
+fn (g: ^Gen) no() {
+	g.lower_indent()
+	g.write(g.indent + "} else {\n")
+	g.indent += "\t"
 }
 
 fn (g: ^Gen) print() {

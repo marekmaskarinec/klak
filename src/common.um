@@ -1,7 +1,21 @@
 
 import (
+	"std.um"
 	"../lib/libs/strings.um"
 )
+
+fn readall*(f: std.File): str {
+    const blockSize = 16
+    res := ""
+
+    for ok := true; ok {
+	    var buff: [blockSize + 1]char
+	    ok = std.fread(f, ^[blockSize]char(&buff)) == 1
+	    res += str([]char(buff))
+    }
+
+    return res
+}
 
 fn hash*(s: str): uint32 {  // djb2 hash    
     var hash: uint32 = 5381;

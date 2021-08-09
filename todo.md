@@ -18,7 +18,7 @@
 	- [x] - fi
 	- [x] - loop
 	- [x] - pool
-	- [ ] - switch
+	- [x] - switch
 	- [ ] - 4l's iter
 - [x] - int
 - [x] - hex int

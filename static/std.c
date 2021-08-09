@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-typedef long long int kk_int;
-typedef unsigned long long int kk_uint;
+typedef int kk_int;
+typedef unsigned int kk_uint;
 typedef double kk_float;
 typedef char kk_char;
 typedef char kk_bool;
@@ -39,10 +39,6 @@ typedef struct {
 } kk_gcobj;
 
 typedef struct {
-	int32_t divident, divisor;
-} kk_fraction;
-
-typedef struct {
 	int len;
 	kk_cell *data;
 } kk_array;
@@ -66,6 +62,9 @@ kk_node *the_stack = NULL;
 kk_cell tmp_cell = {0};
 int kk_line = 0;
 char *kk_file = NULL;
+const char *type_strs[] = {
+	"null", "int", "uint", "float", "gc object", "char", "string"
+};
 
 void kk_runtime_error(char *msg, ...) {
 	fprintf(stderr, "\x1b[1m(%d): \x1b[31mruntime error: \x1b[0m", kk_line);
@@ -179,7 +178,20 @@ kk_bool kk_is_true(kk_cell cell) {
 	return 0;
 }
 
-void kk_BUILTIN___SMALLER__() {
+double kk_get_double_val(kk_cell cell) {
+	switch (cell.type) {
+	case kk_type_int:
+		return cell.int_val;
+	case kk_type_uint:
+		return cell.uint_val;
+	case kk_type_float:
+		return cell.float_val;
+	}
+
+	return 0;
+}
+
+void kk_BUILTIN___SMALLER__(void) {
 	kk_int a = kk_list_popget(&the_stack).int_val;
 	kk_int b = kk_list_popget(&the_stack).int_val;
 
@@ -190,18 +202,73 @@ void kk_BUILTIN___SMALLER__() {
 	kk_list_push_front(&the_stack, tmp_cell, 0);
 }
 
+void kk_BUILTIN___EQUAL__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	kk_bool res = 0;
+
+	switch (a.type) {
+	case kk_type_null:
+		res = b.type == kk_type_null;
+		break;
+	case kk_type_gcobj:
+		switch(((kk_gcobj *)a.ptr_val)->type) {
+		case kk_type_string:
+			if (((kk_gcobj *)b.ptr_val)->type != kk_type_string)
+				kk_runtime_error("Cannot compare string to %s.", type_strs[((kk_gcobj *)b.ptr_val)->type]);
+			
+			res = !strcmp((char *)((kk_gcobj *)a.ptr_val)->data, (char *)((kk_gcobj *)b.ptr_val)->data);
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		res = kk_get_double_val(a) == kk_get_double_val(b);
+		break;
+	}
+
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = res }, 0);
+}
+
 int main() {
-	kk_line = 0 ;
-	for (;;) {
+	{
 		{
-			kk_line = 0 ;
 			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = 1 }, 0 );
 
-			kk_line = 0 ;
-			if (!kk_is_true(kk_list_popget(&the_stack))) break;
-		kk_line = 0 ;
 		}
-	kk_line = 0 ;
+
+		kk_cell case_tmp_1  = kk_list_popget(&the_stack);
+		
+		{
+			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = 1 }, 0 );
+
+		}
+		kk_list_push_front(&the_stack, case_tmp_1 , 0);
+		kk_BUILTIN___EQUAL__();
+		if (kk_is_true(kk_list_popget(&the_stack))) {
+			printf("first case\n");
+			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = 2 }, 0 );
+
+		} else {
+
+			{
+				kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = 2 }, 0 );
+
+			}
+			kk_list_push_front(&the_stack, case_tmp_1 , 0);
+			kk_BUILTIN___EQUAL__();
+			if (kk_is_true(kk_list_popget(&the_stack))) {
+				printf("second case\n");
+				kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = 3 }, 0 );
+
+			} else {
+				printf("\n");
+				kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = 4 }, 0 );
+
+			}
+		}
 	}
 
 }

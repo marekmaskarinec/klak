@@ -91,7 +91,7 @@ One cell is 8 bytes, but can be less on some systems.
 ### numbers
 
 There are integers, decimals and fractions.
-Ints are 64-bit (`long long int`), decimals are 64-bit too (`double`) and fractions (WIP) are made of two 32-bit ints.
+Ints are 32-bit (`long long int`), decimals are 32-bit too (`double`) and fractions (WIP) are made of two 32-bit ints.
 
 ### arrays (WIP)
 
@@ -174,22 +174,21 @@ Will print numbers from 0 to 9.
 
 ### switch
 
-Switch case like in c, but without fallthrough.
+Code after `case` is evaluated and the top of the stack is saved.
+Then code after `on` is evaluated and top is compared with the value saved before.
+If none of the ons pass, else is executed.
 
 ```
-match  5  then
-	case  1  then
-		; i don't get executed
-	esac
-
-	case  5  then
-		; i get executed
-	esac
-
-	case     then
-		; when no case is found
-	esac
-hctam
+case  5  then
+	on 1 then
+		"first case" 1 format
+	no
+	on 2 then
+		"second case" 1 format
+	no
+	else
+		"fallback case" 1 format
+esac
 ```
 
 ### iter

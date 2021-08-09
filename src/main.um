@@ -1,5 +1,6 @@
 
 import (
+	"std.um"
 	"gen.um"
 	"lexer.um"
 	"parser.um"
@@ -9,9 +10,15 @@ import (
 )
 
 fn main() {
+	f := std.fopen("test.kk", "r")
+	inp := common.readall(f)
+	std.fclose(f)
+
+	inp = strings.replace(inp, "\t", " ")
+
 	g := gen.Gen{[]str{}, strings.mk_builder(), strings.mk_builder(), "\t", false, 0}
-	l := lexer.Lexer{" .1", 0, 0, 0}
-	p := parser.Parser{l, g, common.errorf, 0, 0, false, []str{}, []str{"__PLUS__", "__SMALLER__"}, 0, 0, list.List{}}
+	l := lexer.Lexer{inp, 0, 0, 0}
+	p := parser.Parser{l, g, common.errorf, 0, 0, false, []str{}, []str{"__PLUS__", "__SMALLER__", "__EQUAL__"}, 0, 0, 0, 0, 0, false, []int{}, list.List{}}
 
 	for p.parse_next(lexer.tok_eof, "") && !p.had_error { }	
 

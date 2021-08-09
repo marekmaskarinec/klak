@@ -23,6 +23,12 @@ type Parser* = struct {
 
 	if_nest_size: int
 	loop_nest_size: int
+	case_nest_size: int
+	on_nest_size: int
+	default_nest_size: int
+
+	in_case: bool
+	on_count: []int
 
 	variables: list.List
 }
@@ -156,6 +162,13 @@ fn (p: ^Parser) parse_if() {
 }
 
 fn (p: ^Parser) parse_else() {
+	if p.in_case {
+		p.variables.push_front("ENTER_SCOPE")
+		p.default_nest_size++
+
+		return
+	}
+
 	if p.if_nest_size == 0 {
 		p.err("Unexpected else. Not in a statement.", ErrArgs{})
 	}
@@ -175,9 +188,11 @@ fn (p: ^Parser) parse_fi() {
 
 fn (p: ^Parser) parse_loop() {
 	p.g.loop_head()
+
 	p.variables.push_front("ENTER_SCOPE")
 	for p.parse_next(lexer.tok_keyword, "then") && !p.had_error { }
 	p.variables = p.g.gc(p.variables)
+
 	p.g.loop_cond()
 	p.g.lower_indent()
 	p.g.write(p.g.indent + "}\n")
@@ -189,6 +204,85 @@ fn (p: ^Parser) parse_pool() {
 	p.loop_nest_size--
 	p.variables = p.g.gc(p.variables)
 	p.g.pool()
+}
+
+fn (p: ^Parser) parse_case() {
+	p.g.case_header()
+	
+	p.variables.push_front("ENTER_SCOPE")
+	for p.parse_next(lexer.tok_keyword, "then") && !p.had_error { }
+	p.variables = p.g.gc(p.variables)
+
+	p.g.case_footer(p.case_nest_size)
+
+	p.case_nest_size++
+	p.in_case = true
+
+	p.on_count = append([]int{0}, p.on_count)
+}
+
+fn (p: ^Parser) parse_on() {
+	if !p.in_case {
+		p.err("On not used in a case statement.", ErrArgs{})
+	}
+
+	p.g.write("\n" + p.g.indent + "{\n")
+	p.g.indent += "\t"
+
+	p.variables.push_front("ENTER_SCOPE")
+	for p.parse_next(lexer.tok_keyword, "then") && !p.had_error { }
+	p.variables = p.g.gc(p.variables)
+
+	p.g.on(p.case_nest_size)
+
+	p.variables.push_front("ENTER_SCOPE")
+
+	p.in_case = false
+	p.on_nest_size++
+	p.on_count[0]++
+}
+
+fn (p: ^Parser) parse_no() {
+	if p.on_nest_size == 0 {
+		p.err("Unexpected no. Not in an on statement.", ErrArgs{})
+	}
+
+	p.variables = p.g.gc(p.variables)
+	p.on_nest_size--
+	p.in_case = true
+
+	p.g.no()
+}
+
+fn (p: ^Parser) parse_esac() {
+	if p.case_nest_size == 0 {
+		p.err("Not in a case statement.", ErrArgs{})
+		return
+	}
+
+	if p.default_nest_size == 0 {
+		p.err("Missing default case.", ErrArgs{})
+		return
+	}
+
+	for i:=0; i < p.on_count[0]; i++ {
+		p.g.lower_indent()
+		p.g.write(p.g.indent + "}\n")
+	}
+
+	if len(p.on_count) == 1 {
+		p.on_count = []int{}
+	} else {
+		p.on_count = slice(p.on_count, 1, len(p.on_count))
+	}
+
+	// exit case scope
+	p.variables = p.g.gc(p.variables)
+	p.g.lower_indent()
+	p.g.write(p.g.indent + "}\n")
+
+	p.case_nest_size--
+	p.in_case = false
 }
 
 fn (p: ^Parser) parse_keyword(kw: str) {
@@ -204,6 +298,14 @@ fn (p: ^Parser) parse_keyword(kw: str) {
 		p.parse_loop()
 	} else if kw == "pool" {
 		p.parse_pool()
+	} else if kw == "case" {
+		p.parse_case()
+	} else if kw == "on" {
+		p.parse_on()
+	} else if kw == "no" {
+		p.parse_no()
+	} else if kw == "esac" {
+		p.parse_esac()
 	}
 }
 

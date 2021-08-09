@@ -211,7 +211,7 @@ fn (l: ^Lexer) next(): Token {
 			}
 		} else if tok.v == "t" || tok.v == "n" {
 			tok.t = tok_constant
-		} else if strings.contains("if else then fi loop pool mkw", tok.v) {
+		} else if strings.contains("if else then fi loop pool mkw case esac on no", tok.v) {
 			tok.t = tok_keyword
 		} else {
 			tok.t = tok_word
