@@ -10,10 +10,20 @@ import (
 
 fn main() {
 	g := gen.Gen{[]str{}, strings.mk_builder(), strings.mk_builder(), "\t", false, 0}
-l := lexer.Lexer{" \"a string literal\"", 0, 0, 0}
+l := lexer.Lexer{" mkw hello { ", 0, 0, 0}
 	p := parser.Parser{l, g, common.errorf, 0, 0, false, []str{}, []str{"__PLUS__", "__SMALLER__"}, 0, list.List{}}
 
 	for p.parse_next(lexer.tok_eof, "") && !p.had_error { }	
 
-	p.g.print()
+	if p.if_nest_size > 0 {
+		p.err("Unended if statement.", []interface{}{})
+	}
+
+	if p.g.in_block {
+		p.err("Unended word declaration.", []interface{}{})
+	}
+
+	if !p.had_error {
+		p.g.print()
+	}
 }
