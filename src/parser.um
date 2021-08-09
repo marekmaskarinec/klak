@@ -21,7 +21,7 @@ type Parser* = struct {
 	words: []str
 	builtins: []str
 
-	in_if: int
+	if_nest_size: int
 
 	variables: list.List
 }
@@ -55,7 +55,10 @@ fn (p: ^Parser) is_user_word(word: str): bool {
 }
 
 fn (p: ^Parser) is_variable(word: str): bool {
-	for node:=p.variables.front; node != null; node=node.next {
+	for node:=p.variables.front;
+	    node != null && ^str(node.value)^ != "ENTER_FUNCTION";
+	    node=node.next {
+		
 		if word == ^str(node.value)^ {
 			return true
 		}
@@ -133,11 +136,11 @@ fn (p: ^Parser) parse_if() {
 
 	p.variables.push_front("ENTER_SCOPE")
 	p.g.if_cond()
-	p.in_if++
+	p.if_nest_size++
 }
 
 fn (p: ^Parser) parse_else() {
-	if p.in_if == 0 {
+	if p.if_nest_size == 0 {
 		p.err("Unexpected else. Not in a statement.", ErrArgs{})
 	}
 
@@ -145,11 +148,11 @@ fn (p: ^Parser) parse_else() {
 }
 
 fn (p: ^Parser) parse_fi() {
-	if p.in_if == 0 {
+	if p.if_nest_size == 0 {
 		p.err("Unexpected fi. Not in a statement.", ErrArgs{})
 	}
 
-	p.in_if--
+	p.if_nest_size--
 	p.variables = p.g.gc(p.variables)
 	p.g.fi_cond()
 }

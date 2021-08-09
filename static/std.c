@@ -5,6 +5,8 @@
 #include <stdarg.h>
 
 typedef long long int kk_int;
+typedef unsigned long long int kk_uint;
+typedef double kk_float;
 typedef char kk_char;
 
 typedef enum {
@@ -17,7 +19,12 @@ typedef enum {
 
 typedef struct {
 	kk_type type;
-	void *data;
+	union {
+		kk_int   int_val;
+		kk_float float_val;
+		void     *ptr_val;
+		kk_uint  uint_val;
+	};
 } kk_cell;
 
 typedef struct {
@@ -89,22 +96,22 @@ void kk_gcobj_dec(kk_gcobj *o) {
 
 void kk_cell_copy(kk_cell *target, kk_cell *src) {
 	if (target->type == kk_type_gcobj)
-		kk_gcobj_dec((kk_gcobj *)target->data);
+		kk_gcobj_dec((kk_gcobj *)target->ptr_val);
 
 	memcpy(target, src, sizeof(kk_cell));
 
 	if (src->type == kk_type_gcobj)
-		kk_gcobj_inc((kk_gcobj *)src->data);
+		kk_gcobj_inc((kk_gcobj *)src->ptr_val);
 }
 
 void kk_node_free(kk_node *node) {
 	if (node->cell.type == kk_type_gcobj)
-		kk_gcobj_dec((kk_gcobj *)node->cell.data);
+		kk_gcobj_dec((kk_gcobj *)node->cell.ptr_val);
 }
 
 void kk_list_push_front(kk_node **list, kk_cell data, int off) {
 	if (data.type == kk_type_gcobj)
-		kk_gcobj_inc((kk_gcobj *)data.data);
+		kk_gcobj_inc((kk_gcobj *)data.ptr_val);
 
 	kk_node *node = malloc(sizeof(kk_node));
 	if (!node)
@@ -150,52 +157,37 @@ kk_cell kk_list_popget(kk_node **list) {
 	return out;
 }
 
-void kk__BUILTIN___SMALLER__() {
-	kk_int a = (kk_int)(kk_list_popget(&the_stack).data);
-	kk_int b = (kk_int)(kk_list_popget(&the_stack).data);
+void kk_BUILTIN___SMALLER__() {
+	kk_int a = kk_list_popget(&the_stack).int_val;
+	kk_int b = kk_list_popget(&the_stack).int_val;
 
-	kk_int res = b < a;
-	memcpy(tmp_cell.data, &res, sizeof(kk_int));
+	tmp_cell.type = kk_type_int;
+	tmp_cell.int_val = b < a;
 	kk_list_push_front(&the_stack, tmp_cell, 0);
 }
+
 
 int main() {
 	kk_line = 0 ;
 	{
-		kk_int tmp = 1 ;
-		memcpy(&tmp_cell.data, &tmp, sizeof(kk_int));
 		tmp_cell.type = kk_type_int;
+		tmp_cell.int_val = 3 ;
 		kk_list_push_front(&the_stack, tmp_cell, 0 );
 	}
 
 	kk_line = 0 ;
-	tmp_cell = kk_list_popget(&the_stack);
-	if ((kk_int)(tmp_cell.data) != 0) {
-		kk_line = 0 ;
-		{
-			kk_char *tmp = malloc(17 );
-			if (!tmp) kk_runtime_error("Failed to allocate string.");
-			tmp[16 ] = 0;
-			strcpy(tmp, "pushing a string");
-			kk_gcobj *tmpobj = malloc(sizeof(kk_gcobj));
-			if (!tmpobj) kk_runtime_error("Failed to allocate gc object.");
-			tmpobj->type = kk_type_string; tmpobj->refs = 0; tmpobj->data = tmp;
-			tmp_cell.data = tmpobj;
-			tmp_cell.type= kk_type_gcobj;
-			kk_list_push_front(&the_stack, tmp_cell, 0 );
-		}
+	{
+		tmp_cell.type = kk_type_int;
+		tmp_cell.int_val = 5 ;
+		kk_list_push_front(&the_stack, tmp_cell, 0 );
+	}
 
-		kk_line = 0 ;
-		kk_cell __USER__VAR_var = {0};
+	kk_line = 0 ;
+	kk_BUILTIN___SMALLER__();
 
-		kk_line = 0 ;
-		kk_cell_copy(&__USER__VAR_var, &the_stack->cell);
-		kk_line = 0 ;
-		kk_list_popn(&the_stack, 1 );
-
-		kk_line = 0 ;
-		if (__USER__VAR_var.type == kk_type_gcobj)
-			kk_gcobj_dec((kk_gcobj *)__USER__VAR_var.data);
+	kk_line = 0 ;
+	if (kk_list_popget(&the_stack).int_val != 0) {
+		printf("it werks\n");
 	kk_line = 0 ;
 	}
 
