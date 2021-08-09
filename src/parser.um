@@ -22,6 +22,7 @@ type Parser* = struct {
 	builtins: []str
 
 	if_nest_size: int
+	loop_nest_size: int
 
 	variables: list.List
 }
@@ -157,6 +158,24 @@ fn (p: ^Parser) parse_fi() {
 	p.g.fi_cond()
 }
 
+fn (p: ^Parser) parse_loop() {
+	p.g.loop_head()
+	p.variables.push_front("ENTER_SCOPE")
+	for p.parse_next(lexer.tok_keyword, "then") && !p.had_error { }
+	p.variables = p.g.gc(p.variables)
+	p.g.loop_cond()
+	p.g.lower_indent()
+	p.g.write(p.g.indent + "}\n")
+
+	p.loop_nest_size++
+}
+
+fn (p: ^Parser) parse_pool() {
+	p.loop_nest_size--
+	p.variables = p.g.gc(p.variables)
+	p.g.pool()
+}
+
 fn (p: ^Parser) parse_keyword(kw: str) {
 	if kw == "mkw" {
 		p.parse_mkw()
@@ -166,6 +185,10 @@ fn (p: ^Parser) parse_keyword(kw: str) {
 		p.parse_else()
 	} else if kw == "fi" {
 		p.parse_fi()
+	} else if kw == "loop" {
+		p.parse_loop()
+	} else if kw == "pool" {
+		p.parse_pool()
 	}
 }
 

@@ -192,18 +192,17 @@ void kk_BUILTIN___SMALLER__() {
 
 int main() {
 	kk_line = 0 ;
-	{
-		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
-		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
-		tmp->type = kk_type_string; tmp->refs = 0; 
-		tmp->data = malloc(17 );
-		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
-		((char *)tmp->data)[16 ] = 0;
-		strcpy(tmp->data, "a string literal");
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
-	}
+	for (;;) {
+		{
+			kk_line = 0 ;
+			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_int, .int_val = 1 }, 0 );
 
-	printf("%s\n", (char *)((kk_gcobj *)the_stack->cell.ptr_val)->data);
+			kk_line = 0 ;
+			if (!kk_is_true(kk_list_popget(&the_stack))) break;
+		kk_line = 0 ;
+		}
+	kk_line = 0 ;
+	}
 
 }
 

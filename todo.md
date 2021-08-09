@@ -16,8 +16,10 @@
 	- [x] - if
 	- [x] - then
 	- [x] - fi
-	- [ ] - loop
-	- [ ] - pool
+	- [x] - loop
+	- [x] - pool
+	- [ ] - switch
+	- [ ] - 4l's iter
 - [x] - int
 - [x] - hex int
 - [ ] - float

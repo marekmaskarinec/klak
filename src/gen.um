@@ -143,6 +143,22 @@ fn (g: ^Gen) gc(vars: list.List): list.List {
 	return vars
 }
 
+fn (g: ^Gen) loop_head() {
+	g.write(g.indent + "for (;;) {\n" +
+		g.indent + "\t" + "{\n")
+
+	g.indent += "\t\t"
+}
+
+fn (g: ^Gen) loop_cond() {
+	g.write(g.indent + "if (!kk_is_true(kk_list_popget(&the_stack))) break;\n")
+}
+
+fn (g: ^Gen) pool() {
+	g.lower_indent()
+	g.write(g.indent + "}\n")
+}
+
 fn (g: ^Gen) print() {
 	printf("%s\n", g.buf.to_str())
 	printf("int main() {\n%s\n}\n", g.main_fn.to_str())
