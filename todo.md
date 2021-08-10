@@ -39,7 +39,7 @@
 	- [ ] - proper testing
 - [ ] - normal idents in errors
 - [ ] - libtcc
-- [ ] - lists
+- [ ] - cons
 - [ ] - hashmaps
 - [ ] - arrays
 - [ ] - file including
@@ -58,7 +58,7 @@
 
 ## comparation
 
-- [ ] - =  # equals
+- [x] - =  # equals
 - [ ] - >  # bigger
 - [ ] - <  # smaller
 - [ ] - <= # smaller or equal
@@ -98,28 +98,29 @@
 ## arrays
 
 - [ ] - mka  # make array with size of front value
-- [ ] - gnth # get nth element of an array [ array, index ]
-- [ ] - snth # set nth element of an array [ array, index, value ]
+- [ ] - gnth # get nth element of an array ( array, index -- array, values-at-index )
+- [ ] - snth # set nth element of an array ( array, index, value -- array )
 - [ ] - len  # get length
 - [ ] - atol # converts an array to a list
-- [ ] - find # returns a list of indexes, where value can be found [ array, value ]
+- [ ] - find # returns a list of indexes, where value can be found ( array, value -- list-of-indexes )
 
 
 ## strings
 
 - [ ] - gnth, snth and len are usable with strings
-- [ ] - grow     # grows a string len by reallocating it (slow) [ string to-add ]
+- [ ] - grow     # grows a string len by reallocating it (slow) ( string to-add -- result )
 - [ ] - cat      # adds a string to string (even grows)
 - [ ] - contains # returns t if string contains a substring
-- [ ] - split    # splits a string into an array of strings [ string separator ]
+- [ ] - split    # splits a string into an array of strings ( string separator -- result )
 
 
-## lists
+## cons
 
+- [x] - cons # pops two values and creates cons cell.
 - [ ] - contains gnth, snth, len, find and stack operators, but prefixed with l
 - [ ] - ltoa # converts a list to an array
-- [ ] - car  # returns the lists car
-- [ ] - cdr  # returns the lists cdr
+- [ ] - car  # returns the car
+- [ ] - cdr  # returns the cdr
 
 
 ## tables

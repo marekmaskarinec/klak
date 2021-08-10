@@ -60,7 +60,9 @@ fn (g: ^Gen) push_string(value, side: str, offset: int) {
 }
 
 fn (g: ^Gen) pop(n: int) {
-	g.write(g.indent + "kk_list_popn(&the_stack, " + repr(n) + ");\n\n")
+	g.write(
+		g.indent + "kk_gcobj_dec(the_stack->cell);\n" +
+		g.indent + "kk_list_popn(&the_stack, " + repr(n) + ");\n\n")
 }
 
 fn (g: ^Gen) assign(name: str) {
@@ -108,7 +110,10 @@ fn (g: ^Gen) close() {
 
 fn (g: ^Gen) if_cond() {
 	g.write(
-		g.indent + "if (kk_is_true(kk_list_popget(&the_stack))) {\n")
+		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
+		g.indent + "tmp_res = kk_is_true(tmp_cell);\n" +
+		g.indent + "kk_gcobj_dec(&tmp_cell);" +
+		g.indent + "if (tmp_res) {\n")
 
 	g.indent += "\t"
 }
@@ -128,7 +133,7 @@ fn (g: ^Gen) gc_var(name: str) {
 	name = var_prefix + name
 	g.write(
 		g.indent + "if (" + name + ".type == kk_type_gcobj)\n" +
-		g.indent + "\t" + "kk_gcobj_dec((kk_gcobj *)" + name + ".data);\n")
+		g.indent + "\t" + "kk_gcobj_dec(name);\n")
 }
 
 fn (g: ^Gen) gc(vars: list.List): list.List {
@@ -151,7 +156,11 @@ fn (g: ^Gen) loop_head() {
 }
 
 fn (g: ^Gen) loop_cond() {
-	g.write(g.indent + "if (!kk_is_true(kk_list_popget(&the_stack))) break;\n")
+	g.write(
+		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
+		g.indent + "tmp_res = kk_is_true(tmp_cell);\n" +
+		g.indent + "kk_gcobj_dec(&tmp_cell);\n" +
+		g.indent + "if (!tmp_res) break;\n")
 }
 
 fn (g: ^Gen) pool() {
@@ -180,7 +189,10 @@ fn (g: ^Gen) on(nest: int) {
 		g.indent + "}\n" +
 		g.indent + "kk_list_push_front(&the_stack, case_tmp_" + repr(nest) + ", 0);\n" +
 		g.indent + "kk_BUILTIN___EQUAL__();\n" +
-		g.indent + "if (kk_is_true(kk_list_popget(&the_stack))) {\n")
+		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
+		g.indent + "tmp_res = kk_is_true(tmp_cell);\n" +
+		g.indent + "kk_gcobj_dec(&tmp_cell);\n" +
+		g.indent + "if (!tmp_res) {\n")
 	g.indent += "\t"
 }
 
