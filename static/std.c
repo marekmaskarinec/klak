@@ -97,14 +97,15 @@ void kk_cell_free(kk_cell cell) {
 	}
 }
 
+void kk_gcobj_dec(kk_cell *c);
 void kk_gcobj_free(kk_gcobj *o) {
 	switch (o->type) {
 	case kk_type_string:
 		free(o->data);
 		break;
 	case kk_type_cons:
-		kk_cell_free(CONS(o)->car);
-		kk_cell_free(CONS(o)->cdr);
+		kk_gcobj_dec(&CONS(o)->car);
+		kk_gcobj_dec(&CONS(o)->cdr);
 		free(o->data);
 		break;
 	}
@@ -131,6 +132,13 @@ void kk_cell_copy(kk_cell *target, kk_cell *src) {
 
 	if (src->type == kk_type_gcobj)
 		kk_gcobj_inc(src);
+}
+
+kk_type kk_cell_abstype(kk_cell cell) {
+	if (cell.type == kk_type_gcobj)
+		return GCOBJ(cell)->type;
+	
+	return cell.type;
 }
 
 void kk_node_free(kk_node *node) { }
@@ -466,42 +474,70 @@ void kk_BUILTIN_cons(void) {
 	obj->refs = 0; obj->type = kk_type_cons;
 
 	kk_cons *cons = malloc(sizeof(kk_cons));
-	cons->car = kk_list_popget(&the_stack);
 	cons->cdr = kk_list_popget(&the_stack);
+	cons->car = kk_list_popget(&the_stack);
 
 	obj->data = cons;
 
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = obj }, 0);
 }
 
-void USER_WORD_foo() {
-	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+void kk_BUILTIN_car(void) {
+	kk_cell cell = the_stack->cell;
+	
+	kk_type type = kk_cell_abstype(cell);
+	if (type != kk_type_cons)
+		kk_runtime_error("Cannot get car of a %s.", type_strs[type]);
 
-	kk_line = 1 ;
-	kk_BUILTIN___MINUS__();
+	kk_list_push_front(&the_stack, CONS(GCOBJ(cell))->car, 0);
+}
 
-	kk_line = 1 ;
-	return;
+void kk_BUILTIN_cdr(void) {
+	kk_cell cell = the_stack->cell;
+
+	kk_type type = kk_cell_abstype(cell);
+	if (type != kk_type_cons)
+		kk_runtime_error("Cannot get cdr of a %s.", type_strs[type]);
+
+	kk_list_push_front(&the_stack, CONS(GCOBJ(cell))->cdr, 0);
+}
+
+void kk_BUILTIN_uncons(void) {
+	kk_cell cell = kk_list_popget(&the_stack);
+	
+	kk_type type = kk_cell_abstype(cell);
+	if (type != kk_type_cons)
+		kk_runtime_error("Cannot uncons a %s.", type_strs[type]);
+
+	kk_list_push_front(&the_stack, CONS(GCOBJ(cell))->car, 0);
+	kk_list_push_front(&the_stack, CONS(GCOBJ(cell))->cdr, 0);
+
+	kk_gcobj_dec(&cell);
 }
 
 
 int main() {
 	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
-	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+	{
+		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
+		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
+		tmp->type = kk_type_string; tmp->refs = 0;
+		tmp->data = malloc(8 );
+		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
+		((char *)tmp->data)[7 ] = 0;
+		strcpy(tmp->data, "string1");
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
+	}
 
 	kk_line = 0 ;
 	{
 		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
 		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
-		tmp->type = kk_type_string; tmp->refs = 0; 
-		tmp->data = malloc(15 );
+		tmp->type = kk_type_string; tmp->refs = 0;
+		tmp->data = malloc(8 );
 		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
-		((char *)tmp->data)[14 ] = 0;
-		strcpy(tmp->data, "this is a test");
+		((char *)tmp->data)[7 ] = 0;
+		strcpy(tmp->data, "string2");
 		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
 	}
 
@@ -512,21 +548,10 @@ int main() {
 	kk_BUILTIN_s__BIGGER__();
 
 	kk_line = 0 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
+	kk_BUILTIN_uncons();
 
 	kk_line = 0 ;
 	kk_BUILTIN_s__BIGGER__();
 
 
 }
-
-#ifdef TEST
-int main() {
-	int64_t tmp = 5;
-	memcpy(tmp_cell, &tmp, sizeof(int64_t));
-	printf("%d\n", (int64_t)(*tmp_cell));
-	kk_list_push_front(&the_stack, tmp_cell, 0);
-	printf("%d\n", (int64_t)(*the_stack->cell));
-}
-#endif
