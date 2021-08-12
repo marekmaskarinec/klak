@@ -22,10 +22,10 @@ const (
 
 fn (g: ^Gen) write(value: str) {
 	if g.in_block {
-		//g.buf.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
+		g.buf.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
 		g.buf.write_str(value)
 	} else {
-		//g.main_fn.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
+		g.main_fn.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
 		g.main_fn.write_str(value)
 	}
 }
@@ -61,7 +61,7 @@ fn (g: ^Gen) push_string(value, side: str, offset: int) {
 
 fn (g: ^Gen) pop(n: int) {
 	g.write(
-		g.indent + "kk_gcobj_dec(the_stack->cell);\n" +
+		g.indent + "kk_gcobj_dec(&the_stack->cell);\n" +
 		g.indent + "kk_list_popn(&the_stack, " + repr(n) + ");\n\n")
 }
 
@@ -75,7 +75,7 @@ fn (g: ^Gen) decl(name: str) {
 }
 
 fn (g: ^Gen) word_decl(name: str) {
-	g.buf.write_str("void " + var_prefix + name + "()")
+	g.buf.write_str("void " + word_prefix + name + "()")
 }
 
 fn (g: ^Gen) constant(name: str) {
@@ -112,7 +112,7 @@ fn (g: ^Gen) if_cond() {
 	g.write(
 		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
 		g.indent + "tmp_res = kk_is_true(tmp_cell);\n" +
-		g.indent + "kk_gcobj_dec(&tmp_cell);" +
+		g.indent + "kk_gcobj_dec(&tmp_cell);\n" +
 		g.indent + "if (tmp_res) {\n")
 
 	g.indent += "\t"
@@ -200,6 +200,18 @@ fn (g: ^Gen) no() {
 	g.lower_indent()
 	g.write(g.indent + "} else {\n")
 	g.indent += "\t"
+}
+
+fn (g: ^Gen) ret() {
+	g.write(g.indent + "return;\n")
+}
+
+fn (g: ^Gen) break_kw() {
+	g.write(g.indent + "break;\n")
+}
+
+fn (g: ^Gen) skip() {
+	g.write(g.indent + "continue;\n")
 }
 
 fn (g: ^Gen) print() {

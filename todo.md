@@ -49,21 +49,21 @@
 
 ## arithmetics
 
-- [ ] - + # add
-- [ ] - - # subtract
-- [ ] - * # multiply
-- [ ] - / # divide
-- [ ] - % # modulo
+- [x] - + # add
+- [x] - - # subtract
+- [x] - * # multiply
+- [x] - / # divide
+- [x] - % # modulo
 
 
 ## comparation
 
 - [x] - =  # equals
-- [ ] - >  # bigger
-- [ ] - <  # smaller
-- [ ] - <= # smaller or equal
-- [ ] - >= # bigger or equal
-- [ ] - != # not equal
+- [x] - >  # bigger
+- [x] - <  # smaller
+- [x] - <= # smaller or equal
+- [x] - >= # bigger or equal
+- [x] - != # not equal
 
 
 ## bitwise operators

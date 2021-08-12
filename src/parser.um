@@ -286,6 +286,33 @@ fn (p: ^Parser) parse_esac() {
 	p.in_case = false
 }
 
+fn (p: ^Parser) parse_ret() {
+	if !p.g.in_block {
+		p.err("ret used outsize of word definition.", ErrArgs{})
+	}
+
+	p.g.gc(p.variables)
+	p.g.ret()
+}
+
+fn (p: ^Parser) parse_break() {
+	if p.loop_nest_size == 0 {
+		p.err("No loop to break.", ErrArgs{})
+	}
+
+	p.g.gc(p.variables)
+	p.g.break_kw()
+}
+
+fn (p: ^Parser) parse_skip() {
+	if p.loop_nest_size == 0 {
+		p.err("No loop to skip.", ErrArgs{})
+	}
+
+	p.g.gc(p.variables)
+	p.g.skip()
+}
+
 fn (p: ^Parser) parse_keyword(kw: str) {
 	if kw == "mkw" {
 		p.parse_mkw()
@@ -307,6 +334,12 @@ fn (p: ^Parser) parse_keyword(kw: str) {
 		p.parse_no()
 	} else if kw == "esac" {
 		p.parse_esac()
+	} else if kw == "ret" {
+		p.parse_ret()
+	} else if kw == "break" {
+		p.parse_break()
+	} else if kw == "skip" {
+		p.parse_skip()
 	}
 }
 
@@ -392,6 +425,7 @@ fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool {
 	case lexer.tok_lambda_close:
 		p.g.close()
 		p.variables = p.g.gc(p.variables)
+		p.variables.remove(p.variables.front)
 
 	case lexer.tok_constant:
 		p.g.constant(tok.v)

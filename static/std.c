@@ -168,6 +168,8 @@ kk_cell kk_list_popget(kk_node **list) {
 
 kk_bool kk_is_true(kk_cell cell) {
 	switch (cell.type) {
+	case kk_type_char:
+		return cell.char_val;
 	case kk_type_float:
 		return cell.float_val;
 	case kk_type_gcobj:
@@ -215,7 +217,190 @@ void kk_BUILTIN___EQUAL__(void) {
 		kk_runtime_error("=: Cannot compare %s.", type_strs[a.type]);
 	}
 
+	kk_gcobj_dec(&a);
+	kk_gcobj_dec(&b);
+
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = res }, 0);
+}
+
+void kk_BUILTIN___PLUS__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	switch (a.type) {
+	case kk_type_gcobj:
+		switch(((kk_gcobj *)a.ptr_val)->type) {
+		case kk_type_string:
+			if (((kk_gcobj *)b.ptr_val)->type != kk_type_string)
+				kk_runtime_error("+: Cannot add string to %s.", type_strs[((kk_gcobj *)b.ptr_val)->type]);
+			
+			kk_gcobj *aobj = (kk_gcobj *)a.ptr_val;
+			kk_gcobj *bobj = (kk_gcobj *)b.ptr_val;
+
+			aobj->data = realloc(
+				aobj->data,
+				strlen((char *)aobj->data) + strlen((char *)bobj->data));
+
+			kk_list_push_front(&the_stack, a, 0);
+			kk_gcobj_dec(&b);
+			break;
+
+		default:
+			kk_runtime_error("+: Cannot add %s.", type_strs[((kk_gcobj *)a.ptr_val)->type]);
+
+		}
+  
+		break;
+	
+	case kk_type_float:
+		if (b.type != kk_type_float)
+			kk_runtime_error("+: Cannot add float to %s.", type_strs[b.type]);
+
+		a.float_val += b.float_val;
+
+		kk_list_push_front(&the_stack, a, 0);
+		break;
+
+	default:
+		kk_runtime_error("+: Cannot add %s.", type_strs[a.type]);
+
+	}
+}
+
+void kk_BUILTIN___MINUS__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		b.float_val -= a.float_val;
+		kk_list_push_front(&the_stack, b, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot subtract %s from %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___MUL__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		b.float_val *= a.float_val;
+		kk_list_push_front(&the_stack, b, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___DIV__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		if (a.float_val == 0)
+			kk_runtime_error("Division by zero.");
+
+		b.float_val /= a.float_val;
+		kk_list_push_front(&the_stack, b, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___MOD__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		if (a.float_val == 0)
+			kk_runtime_error("Division by zero.");
+
+		b.float_val = (int)b.float_val % (int)a.float_val;
+		kk_list_push_front(&the_stack, b, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___SMALLER__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = b.float_val < a.float_val }, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___BIGGER__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = b.float_val > a.float_val }, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___SMALLER____EQUAL__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = b.float_val <= a.float_val }, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___BIGGER____EQUAL__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = b.float_val >= a.float_val }, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
+}
+
+void kk_BUILTIN___NOT____EQUAL__(void) {
+	kk_cell a = kk_list_popget(&the_stack);
+	kk_cell b = kk_list_popget(&the_stack);
+
+	if (a.type == b.type && a.type == kk_type_float) {
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = b.float_val != a.float_val }, 0);
+	} else {
+		kk_gcobj_dec(&a);
+		kk_gcobj_dec(&b);
+
+		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
+	}
 }
 
 void kk_BUILTIN_cons(void) {
@@ -231,63 +416,79 @@ void kk_BUILTIN_cons(void) {
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = obj }, 0);
 }
 
+void USER_WORD_foo() {
+	kk_line = 0 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_line = 1 ;
+	kk_BUILTIN___MINUS__();
+
+	kk_line = 1 ;
+	return;
+}
+
+
 int main() {
-	{
+	kk_line = 3 ;
+	kk_cell USER_VAR_var = {0};
+
+	kk_line = 5 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 20 }, 0 );
+
+	kk_line = 6 ;
+	kk_cell_copy(&USER_VAR_var, &the_stack->cell);
+	kk_line = 6 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 6 ;
+	for (;;) {
 		{
-			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 5 }, 0 );
-
-		}
-
-		kk_cell case_tmp_1  = kk_list_popget(&the_stack);
-
-		{
+			kk_line = 8 ;
 			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
 
-		}
-		kk_list_push_front(&the_stack, case_tmp_1 , 0);
-		kk_BUILTIN___EQUAL__();
-		tmp_cell = kk_list_popget(&the_stack);
-		tmp_res = kk_is_true(tmp_cell);
-		kk_gcobj_dec(&tmp_cell);
-		if (!tmp_res) {
-			{
-				{
-					kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
-				}
-
-				kk_cell case_tmp_2  = kk_list_popget(&the_stack);
-								kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
-				tmp_cell = kk_list_popget(&the_stack);
-				tmp_res = kk_is_true(tmp_cell);
-				kk_gcobj_dec(&tmp_cell);				if (tmp_res) {
-					printf("it works\n");
-					kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
-
-				}
-
-			}
-		} else {
-
-			{
-				kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
-
-			}
-			kk_list_push_front(&the_stack, case_tmp_1 , 0);
-			kk_BUILTIN___EQUAL__();
+			kk_line = 8 ;
 			tmp_cell = kk_list_popget(&the_stack);
 			tmp_res = kk_is_true(tmp_cell);
 			kk_gcobj_dec(&tmp_cell);
-			if (!tmp_res) {
-				kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 3 }, 0 );
-
-			} else {
-				kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 4 }, 0 );
-
-			}
+			if (!tmp_res) break;
+		kk_line = 8 ;
 		}
+		kk_line = 8 ;
+		kk_list_push_front(&the_stack, USER_VAR_var, 0);
+		printf("%lf\n", USER_VAR_var.float_val);
+
+		kk_line = 9 ;
+		USER_WORD_foo();
+
+		kk_line = 10 ;
+		kk_cell_copy(&USER_VAR_var, &the_stack->cell);
+		kk_line = 10 ;
+		kk_gcobj_dec(&the_stack->cell);
+		kk_list_popn(&the_stack, 1 );
+
+		kk_line = 11 ;
+		kk_list_push_front(&the_stack, USER_VAR_var, 0);
+
+		kk_line = 12 ;
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 16 }, 0 );
+
+		kk_line = 12 ;
+		kk_BUILTIN___SMALLER__();
+
+		kk_line = 12 ;
+		tmp_cell = kk_list_popget(&the_stack);
+		tmp_res = kk_is_true(tmp_cell);
+		kk_gcobj_dec(&tmp_cell);
+		if (tmp_res) {
+			kk_line = 12 ;
+			break;
+		kk_line = 13 ;
+		}
+
+	kk_line = 14 ;
 	}
+
 }
 
 #ifdef TEST
