@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#define GCOBJ(a) ((kk_gcobj *)(a).ptr_val)
+#define CONS(a) ((kk_cons *)a->data)
+
 typedef double kk_float;
 typedef char kk_char;
 typedef char kk_bool;
@@ -85,13 +88,27 @@ void kk_gcobj_inc(kk_cell *o) {
 		((kk_gcobj *)(o->ptr_val))->refs++;
 }
 
+void kk_gcobj_free(kk_gcobj *o);
+void kk_cell_free(kk_cell cell) {
+	switch (cell.type) {
+	case kk_type_gcobj:
+		kk_gcobj_free(GCOBJ(cell));
+		break;
+	}
+}
+
 void kk_gcobj_free(kk_gcobj *o) {
 	switch (o->type) {
 	case kk_type_string:
 		free(o->data);
-		free(o);
+		break;
+	case kk_type_cons:
+		kk_cell_free(CONS(o)->car);
+		kk_cell_free(CONS(o)->cdr);
+		free(o->data);
 		break;
 	}
+	free(o);
 }
 
 void kk_gcobj_dec(kk_cell *c) {
@@ -164,6 +181,14 @@ kk_cell kk_list_popget(kk_node **list) {
 	kk_node_free(to_free);
 	free(to_free);
 	return out;
+}
+
+int kk_list_len(kk_node *list) {
+	int len = 0;
+	for (; list; list = list->next)
+		len++;
+
+	return len;
 }
 
 kk_bool kk_is_true(kk_cell cell) {
@@ -403,6 +428,39 @@ void kk_BUILTIN___NOT____EQUAL__(void) {
 	}
 }
 
+void kk_BUILTIN_s__BIGGER__(void) {
+	printf("<%d> ", kk_list_len(the_stack));
+
+	for (kk_node *node=the_stack; node; node = node->next) {
+		kk_cell cell = node->cell;
+
+		switch (cell.type) {
+		case kk_type_char:
+			printf("%c(%d) ", cell.char_val, cell.char_val);
+			break;
+		case kk_type_float:
+			printf("%f ", cell.float_val);
+			break;
+		case kk_type_gcobj:
+			switch (((kk_gcobj *)cell.ptr_val)->type) {
+			case kk_type_string:
+				printf("\"%s\" ", (char *)((kk_gcobj *)cell.ptr_val)->data);
+				break;
+			default:
+				printf("{gcobj %x %d} ", ((kk_gcobj *)cell.ptr_val)->data, ((kk_gcobj *)cell.ptr_val)->refs);
+			}
+
+			break;
+
+		case kk_type_null:
+			printf("null ");
+			break;
+		}
+	}
+
+	printf("\n");
+}
+
 void kk_BUILTIN_cons(void) {
 	kk_gcobj *obj = malloc(sizeof(kk_gcobj));
 	obj->refs = 0; obj->type = kk_type_cons;
@@ -429,65 +487,37 @@ void USER_WORD_foo() {
 
 
 int main() {
-	kk_line = 3 ;
-	kk_cell USER_VAR_var = {0};
+	kk_line = 0 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
 
-	kk_line = 5 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 20 }, 0 );
+	kk_line = 0 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
 
-	kk_line = 6 ;
-	kk_cell_copy(&USER_VAR_var, &the_stack->cell);
-	kk_line = 6 ;
+	kk_line = 0 ;
+	{
+		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
+		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
+		tmp->type = kk_type_string; tmp->refs = 0; 
+		tmp->data = malloc(15 );
+		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
+		((char *)tmp->data)[14 ] = 0;
+		strcpy(tmp->data, "this is a test");
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
+	}
+
+	kk_line = 0 ;
+	kk_BUILTIN_cons();
+
+	kk_line = 0 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 0 ;
 	kk_gcobj_dec(&the_stack->cell);
 	kk_list_popn(&the_stack, 1 );
 
-	kk_line = 6 ;
-	for (;;) {
-		{
-			kk_line = 8 ;
-			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+	kk_line = 0 ;
+	kk_BUILTIN_s__BIGGER__();
 
-			kk_line = 8 ;
-			tmp_cell = kk_list_popget(&the_stack);
-			tmp_res = kk_is_true(tmp_cell);
-			kk_gcobj_dec(&tmp_cell);
-			if (!tmp_res) break;
-		kk_line = 8 ;
-		}
-		kk_line = 8 ;
-		kk_list_push_front(&the_stack, USER_VAR_var, 0);
-		printf("%lf\n", USER_VAR_var.float_val);
-
-		kk_line = 9 ;
-		USER_WORD_foo();
-
-		kk_line = 10 ;
-		kk_cell_copy(&USER_VAR_var, &the_stack->cell);
-		kk_line = 10 ;
-		kk_gcobj_dec(&the_stack->cell);
-		kk_list_popn(&the_stack, 1 );
-
-		kk_line = 11 ;
-		kk_list_push_front(&the_stack, USER_VAR_var, 0);
-
-		kk_line = 12 ;
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 16 }, 0 );
-
-		kk_line = 12 ;
-		kk_BUILTIN___SMALLER__();
-
-		kk_line = 12 ;
-		tmp_cell = kk_list_popget(&the_stack);
-		tmp_res = kk_is_true(tmp_cell);
-		kk_gcobj_dec(&tmp_cell);
-		if (tmp_res) {
-			kk_line = 12 ;
-			break;
-		kk_line = 13 ;
-		}
-
-	kk_line = 14 ;
-	}
 
 }
 

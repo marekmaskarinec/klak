@@ -67,7 +67,7 @@ fn fix_ident(inp: str): str {
 	inp = strings.replace(inp, "%", "__MOD__")
 	inp = strings.replace(inp, "=", "__EQUAL__")
 	inp = strings.replace(inp, "<", "__SMALLER__")
-	inp = strings.replace(inp, ">", "__GREATER__")
+	inp = strings.replace(inp, ">", "__BIGGER__")
 	inp = strings.replace(inp, "!", "__NOT__")
 	inp = strings.replace(inp, "~", "__XOR__")
 	inp = strings.replace(inp, "&", "__AND__")

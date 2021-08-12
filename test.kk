@@ -1,17 +1,2 @@
 
-mkw foo {
-	1 +
-	ret
-}
-
-:var
-1 .var
-
-loop  1  then
-	var
-	foo
-	.var var
-	if  5 =  then
-		break
-	fi
-pool
+1 2 "this is a test" 1 2 cons s> . s>
