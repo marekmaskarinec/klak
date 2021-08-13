@@ -124,6 +124,13 @@ fn (l: ^Lexer) next(): Token {
 
 	tok := Token{ "", tok_null, l.lineno, l.charno, 1 }
 	switch l.peek_char() {
+	case ';':
+		l.get_before('\n')
+		return l.next()
+	case '(':
+		l.get_before(')')
+		l.next_char()
+		return l.next()
 	case '#':
 		tok.v = l.get_before(' ')
 		if len(tok.v) == 2 || tok.v[1] == '\\'{
