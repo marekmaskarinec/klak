@@ -192,7 +192,12 @@ fn (l: ^Lexer) next(): Token {
 			whole_num := true
 			for i, c in tok.v {
 				if i == 1 && c == 'x' {
-					break
+					continue
+				}
+
+				if c == '.' && i == len(tok.v) - 1 {
+					whole_num = false
+					break;
 				}
 
 				if !is_number(c) {
@@ -209,7 +214,7 @@ fn (l: ^Lexer) next(): Token {
 				l.charno = tok.charno
         
 				num := ""
-				for i:=0; is_number(tok.v[i]); i++ {
+				for i:=0; tok.v[i] != '.' && is_number(tok.v[i]); i++ {
 					l.pos++
 					l.charno++
 					num += str(tok.v[i])

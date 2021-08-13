@@ -308,7 +308,7 @@ void kk_BUILTIN___MINUS__(void) {
 	kk_cell a = kk_list_popget(&the_stack);
 	kk_cell b = kk_list_popget(&the_stack);
 
-	if (a.type == b.type && a.type == kk_type_float) {
+	if (a.type == kk_type_float && b.type == kk_type_float) {
 		b.float_val -= a.float_val;
 		kk_list_push_front(&the_stack, b, 0);
 	} else {
@@ -564,169 +564,71 @@ void kk_BUILTIN_over(void) {
 	kk_list_push_front(&the_stack, the_stack->next->cell, 0);
 }
 
-
 int main() {
 	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+	kk_cell USER_VAR_i = {0};
 
 	kk_line = 0 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 0 ;
-	kk_BUILTIN_dup();
-
-	kk_line = 0 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 0 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 0 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 0 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
-	kk_line = 2 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
 
-	kk_line = 2 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 2 ;
-	kk_BUILTIN_swap();
-
-	kk_line = 2 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 2 ;
+	kk_line = 0 ;
+	kk_cell_copy(&USER_VAR_i, &the_stack->cell);
+	kk_line = 0 ;
 	kk_gcobj_dec(&the_stack->cell);
 	kk_list_popn(&the_stack, 1 );
 
-	kk_line = 2 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 2 ;
-	kk_BUILTIN_s__BIGGER__();
+	kk_line = 0 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
 
 	kk_line = 2 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
 
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+	kk_line = 2 ;
+	for (;;) {
+		{
+			kk_line = 4 ;
+			kk_list_push_front(&the_stack, USER_VAR_i, 0);
 
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 3 }, 0 );
+			kk_line = 4 ;
+			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 46 }, 0 );
 
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 4 }, 0 );
+			kk_line = 4 ;
+			kk_BUILTIN___SMALLER__();
 
-	kk_line = 4 ;
-	kk_BUILTIN_s__BIGGER__();
+			kk_line = 4 ;
+			tmp_cell = kk_list_popget(&the_stack);
+			tmp_res = kk_is_true(tmp_cell);
+			kk_gcobj_dec(&tmp_cell);
+			if (!tmp_res) break;
+		kk_line = 4 ;
+		}
+		kk_line = 4 ;
+		kk_BUILTIN_tuck();
 
-	kk_line = 4 ;
-	kk_BUILTIN_rot();
+		kk_line = 5 ;
+		kk_BUILTIN___PLUS__();
 
-	kk_line = 4 ;
-	kk_BUILTIN_s__BIGGER__();
+		kk_line = 5 ;
+		kk_list_push_front(&the_stack, USER_VAR_i, 0);
 
-	kk_line = 4 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
+		kk_line = 7 ;
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
 
-	kk_line = 4 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
+		kk_line = 7 ;
+		kk_BUILTIN___PLUS__();
 
-	kk_line = 4 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
+		kk_line = 7 ;
+		kk_cell_copy(&USER_VAR_i, &the_stack->cell);
+		kk_line = 7 ;
+		kk_gcobj_dec(&the_stack->cell);
+		kk_list_popn(&the_stack, 1 );
 
-	kk_line = 4 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 4 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
-	kk_line = 6 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
-
-	kk_line = 6 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 3 }, 0 );
-
-	kk_line = 6 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 6 ;
-	kk_BUILTIN_tuck();
-
-	kk_line = 6 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 6 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 6 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 6 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 6 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 6 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 6 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
+	kk_line = 7 ;
+	}
 	kk_line = 8 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+	kk_BUILTIN___PLUS__();
 
-	kk_line = 8 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 3 }, 0 );
-
-	kk_line = 8 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 8 ;
-	kk_BUILTIN_over();
-
-	kk_line = 8 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_line = 8 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 8 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 8 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 8 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
-
-	kk_line = 8 ;
+	kk_line = 10 ;
 	kk_BUILTIN_s__BIGGER__();
 
 

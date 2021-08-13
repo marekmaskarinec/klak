@@ -1,10 +1,12 @@
 
-1 s> dup s> . . s>
+:i 2  .i
 
-1 2 s> swap s> . . s>
+0 1
 
-1 2 3 4 s> rot s> . . . . s>
+loop i 10 < then
+	tuck +
 
-1 2 3 s> tuck s> . . . . s>
+	i 1 + .i
+pool
 
-1 2 3 s> over s> . . . . s>
++ s>
