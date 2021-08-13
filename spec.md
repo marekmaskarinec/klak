@@ -2,16 +2,14 @@
 
 ## introduction
 
-Klak is a dynamically-typed, stack oriented, garbage collected language.
-There is a stack (called the stack), values can be pushed to, poped from, or used as arguments to functions.
+Klak is a dynamically-typed, stack oriented, garbage collected programming language.
 It is case insensitive and itentifiers are lowercased.
 Everything is separated by 1 >= spaces.
 
 ## words
 
 Words are bound to functions, or variables.
-They can use any ASCII symbols except for the first character, which has to be a letter, or `:`.
-The last character can't be any of the stack operators.
+They can use any ASCII symbols except for the first character, which should be a letter.
 They can't be the same as any of the keywords.
 
 ## literals
@@ -20,19 +18,18 @@ Literals automatically push themselves to the stack.
 
 ### numbers
 
-Numbers are ints or real (decimal point) numbers.
-Ints can be written as binary, decimal or hexadecimal.
+Numbers are floats numbers.
+You can write them as hexadecimal.
 
 ### characters
 
 Characters represent one ascii character or a hex number.
-They support c's escape sequences and some other word representations.
+They also support word representations (newline, space and tab).
 
 Examples:
 ```
 #a
 #B
-#\t
 #space
 #SPACE
 ##
@@ -50,8 +47,6 @@ Example:
 ```
 
 ## stack operators
-
-Some operators (not only the stack ones) can be prefixed with a number. If none is included, 1 is assumed.
 
 ### (n).
 
@@ -76,12 +71,11 @@ Is same as
 
 Same as <, but to the right.
 
-## comments (WIP)
+## comments
 
-Comments start with `;`.
-Block comments are done by adding a number after `;`.
-That number marks, how many lines are commented.
-Blocks **aren't** nested.
+There are two types of comments. 
+Line comments: `;` and block comments, which are enclosed in `()`.
+Block comments are usually only used in word definitions.
 
 ## data types
 
@@ -90,10 +84,10 @@ One cell is 8 bytes, but can be less on some systems.
 
 ### numbers
 
-There are integers, decimals and fractions.
-Ints are 32-bit (`long long int`), decimals are 32-bit too (`double`) and fractions (WIP) are made of two 32-bit ints.
+There are only floats.
+They are 64-bit (`double` in c).
 
-### arrays (WIP)
+### arrays
 
 Arrays are of fixed length (which can be determined at runtime).
 They are passed by reference.
@@ -103,11 +97,9 @@ They are passed by reference.
 Strings are null terminated blocks of memory.
 Same as arrays, they are passed by reference.
 
-### lists (WIP)
+### cons
 
-Linked lists.
-They have similar operators to the stack, but prefixed with `l`.
-They are passed by reference.
+Cons is a pair of cells like in lisp.
 
 ### tables (WIP)
 
@@ -122,7 +114,7 @@ They are passed by reference.
 ## declaration
 
 Declaration is done by typing `:` before the variable name.
-It doesn't assign any value.
+No value is assigned, but the variable is initialized with null.
 
 ```
 :a
@@ -134,7 +126,7 @@ Assignement is done by writing `.` before the variable name.
 It pops and assigns the last value.
 
 ```
-3 .a
+:a 3 .a ; a will now hold 3
 ```
 
 ## scopes
@@ -191,7 +183,7 @@ case  5  then
 esac
 ```
 
-### iter
+### iter (WIP)
 
 Iter like in 4l. You declare a variable and then push a variable.
 Optionally, you can provide second declaration.
@@ -209,11 +201,12 @@ reti
 ### functions
 
 Functions are declared with the `mkw` (make word) keyword. It takes a name.
+Function can't be used before declaration.
 
 Example:
 ```
-mkw add {
-	+
+mkw square {
+	dup *
 }
 ```
 
@@ -227,7 +220,7 @@ Prototypes are done by leaving out the body.
 mkw foo
 ```
 
-## multiple files
+## multiple files (WIP)
 
 Files are included similarly to c.
 There are source files and headers.
@@ -242,89 +235,107 @@ Including is done using the `include` word.
 
 ## standard words
 
-```
 ## arithmetics
 
-+ # add
-- # subtract
-* # multiply
-/ # divide
-% # modulo
-
+```
++  add
+-  subtract
+*  multiply
+/  divide
+%  modulo
+```
 
 ## comparation
 
-=  # equals
->  # bigger
-<  # smaller
-<= # smaller or equal
->= # bigger or equal
-!= # not equal
+```
+=   equals
+>   bigger
+<   smaller
+<=  smaller or equal
+>=  bigger or equal
+!=  not equal
+```
 
+## IO
+
+```
+format  like in common lisp ( args... format-string stream -- optional-output )
+s>      prints the stack
+read    read from stdin ( -- string )
+open    open a file ( path mode -- FILE )
+```
 
 ## bitwise operators
 
-b&  # bitwise and
-b|  # bitwise or
-b<< # shift left
-b>> # shift right
-b~  # xor
-!   # t => n, n => t
-
+```
+b&   bitwise and
+b|   bitwise or
+b<<  shift left
+b>>  shift right
+b~   xor
+!    t => n, n => t
+```
 
 ## functions
 
-abs   # absolute function
-neg   # -99 => 99
-sin   # sine
-cos   # cosine
-tg    # tangens
-round # round
-trunc # round to zero
-
+```
+abs    absolute function
+sin    sine
+cos    cosine
+tg     tangens
+round  round
+trunc  round to zero
+```
 
 ## stack operation
 
-dup  # duplicates the value on the front
-swap # swaps the front with the second element
-rot  # rotates front 3 items
-tuck # duplicate the top item below the second slot
-over # duplicate the second item to the front 
-
+```
+dup   duplicates the value on the front
+swap  swaps the front with the second element
+rot   rotates front 3 items
+tuck  duplicate the top item below the second slot
+over  duplicate the second item to the front 
+```
 
 ## arrays
 
-mka  # make array with size of front value
-gnth # get nth element of an array [ array, index ]
-snth # set nth element of an array [ array, index, value ]
-len  # get length
-atol # converts an array to a list
-find # returns a list of indexes, where value can be found [ array, value ]
-
+```
+mka   make array with size of front value ( length -- array )
+get   get nth element of an array ( array index -- array element )
+set   set nth element of an array ( array index values -- array )
+len   get length ( array -- array length )
+atol  converts an array to a list ( array -- list )
+find  returns a list of indexes, where value can be found ( array value -- array list-of-values )
+```
 
 ## strings
 
-# gnth, snth and len are usable with strings
-grow     # grows a string len by reallocating it (slow) [ string to-add ]
-cat      # adds a string to string (even grows)
-contains # returns t if string contains a substring
-split    # splits a string into an array of strings [ string separator ]
-
+```
+get, set and len are usable with strings
+contains  returns t if string contains a substring ( string substring -- contains )
+split     splits a string into an array of strings ( string separator -- list )
+```
 
 ## lists
 
-# contains gnth, snth, len, find and stack operators, but prefixed with l
-ltoa # converts a list to an array
-car  # returns the lists car
-cdr  # returns the lists cdr
-
+```
+contains, get, set, len, find and stack operators, but prefixed with l
+ltoa  converts a list to an array ( list -- array )
+car   returns the lists car ( cons -- car )
+cdr   returns the lists cdr ( cons -- cdr )
+```
 
 ## tables
 
-mkt  # makes a table
-tget # gets an element [ table key ]
-tset # sets an element [ table key value ]
+```
+get, set, and contains is usable with tables
+mkt    makes a table ( -- table )
+ttol   returns a list of `key value cons` ( table -- list )
+```
 
 ## memory
-cpy
+
+```
+cpy   copies value ( val -- val1 val2 )
+rcpy  recursively copies value ( val -- val1 val2 )
 ```

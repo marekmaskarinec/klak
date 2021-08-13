@@ -41,7 +41,7 @@
 - [ ] - libtcc
 - [x] - cons
 - [ ] - hashmaps
-- [ ] - arrays
+- [x] - arrays
 - [ ] - file including
 - [ ] - macros?
 
@@ -97,9 +97,9 @@
 
 ## arrays
 
-- [ ] - mka  # make array with size of front value
-- [ ] - gnth # get nth element of an array ( array, index -- array, values-at-index )
-- [ ] - snth # set nth element of an array ( array, index, value -- array )
+- [x] - mka  # make array with size of front value
+- [x] - get  # get nth element of an array ( array, index -- array, values-at-index )
+- [x] - set  # set nth element of an array ( array, index, value -- array )
 - [ ] - len  # get length
 - [ ] - atol # converts an array to a list
 - [ ] - find # returns a list of indexes, where value can be found ( array, value -- list-of-indexes )
@@ -126,8 +126,8 @@
 ## tables
 
 - [ ] - mkt  # makes a table
-- [ ] - tget # gets an element [ table key ]
-- [ ] - tset # sets an element [ table key value ]
+- [ ] - get # gets an element [ table key ]
+- [ ] - set # sets an element [ table key value ]
 
 ## memory
 - [ ] - cpy  # copies a value
