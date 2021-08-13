@@ -43,11 +43,12 @@ type Token* = struct {
 }
 
 fn is_number(c: char): bool {
-	return (c >= '0' && c <= '9') || c == '.' || c == '/'
+	return (c >= '0' && c <= '9') || c == '.'
 }
 
 fn is_kw(w: str): bool {
-	kws := []str{"if", "else","then","fi","loop","pool","mkw","case","esac","on","no","ret","break","skip"}
+	kws := []str{"if", "else","then","fi","loop","pool","mkw","case",
+		"esac","on","no","ret","break","skip"}
 
 	for kw in kws {
 		if kw == w {

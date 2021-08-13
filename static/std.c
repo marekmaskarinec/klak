@@ -19,6 +19,7 @@ typedef enum {
 
 	kk_type_string,
 	kk_type_cons,
+	kk_type_array,
 } kk_type;
 
 typedef struct {
@@ -564,71 +565,173 @@ void kk_BUILTIN_over(void) {
 	kk_list_push_front(&the_stack, the_stack->next->cell, 0);
 }
 
+void kk_BUILTIN_mka(void) {
+	kk_cell lencell = kk_list_popget(&the_stack);
+
+	if (lencell.type != kk_type_float)
+		kk_runtime_error("Cannot use %s as length.", type_strs[lencell.type]);
+
+	kk_array *arr = malloc(sizeof(kk_array));
+	arr->data = calloc(sizeof(kk_cell), lencell.float_val);
+
+	kk_gcobj *o = malloc(sizeof(kk_gcobj));
+	o->refs = 0; o->type = kk_type_array;
+	o->data = arr;
+
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = o }, 0);
+}
+
+void kk_BUILTIN_get(void) {
+	kk_cell icell = kk_list_popget(&the_stack);
+
+	if (icell.type != kk_type_float)
+		kk_runtime_error("Cannot use %s as an index.", type_strs[icell.type]);
+
+	int index = icell.float_val;
+
+	if (the_stack->cell.type != kk_type_gcobj)
+		kk_runtime_error("Trying to index %s.", type_strs[the_stack->cell.type]);
+
+	switch (GCOBJ(the_stack->cell)->type) {
+	case kk_type_array:;
+		kk_array *arr = (kk_array *)(GCOBJ(the_stack->cell)->data);
+
+		if (index > arr->len)
+			kk_runtime_error("Index %d out of range %d.", index, arr->len);
+
+		kk_list_push_front(&the_stack, arr->data[index], 0);
+		break;
+
+	case kk_type_string:;
+		char *s = (char *)(GCOBJ(the_stack->cell)->data);
+
+		int len = strlen(s);
+		if (index > len)
+			kk_runtime_error("Index %d out of range %d.", index, len);
+
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = s[index] }, 0);
+		break;
+
+	case kk_type_cons:;
+		kk_cons *list = (kk_cons *)(GCOBJ(the_stack->cell)->data);
+
+		for (int i=0; i < index && list; i++) {
+			kk_type type = kk_cell_abstype(list->cdr);
+
+			if (type == kk_type_null)
+				kk_runtime_error("Index %d out of range %d.", index, i);
+
+			if (type != kk_type_cons)
+				kk_runtime_error("Trying to index not a list.");
+
+			list = (kk_cons *)(GCOBJ(list->cdr)->data);
+		}
+
+		kk_list_push_front(&the_stack, list->car, 0);
+		break;
+
+	default:
+		kk_runtime_error("Cannot iterate over %s.", type_strs[GCOBJ(the_stack->cell)->type]);
+
+	}
+}
+
+void kk_BUILTIN_set(void) {
+	kk_cell val = kk_list_popget(&the_stack);
+	kk_cell icell = kk_list_popget(&the_stack);
+
+	if (icell.type != kk_type_float)
+		kk_runtime_error("Cannot use %s as an index.", type_strs[icell.type]);
+
+	int index = icell.float_val;
+
+	if (the_stack->cell.type != kk_type_gcobj)
+		kk_runtime_error("Trying to index %s.", type_strs[the_stack->cell.type]);
+
+	switch (GCOBJ(the_stack->cell)->type) {
+	case kk_type_array:;
+		kk_array *arr = (kk_array *)(GCOBJ(the_stack->cell)->data);
+
+		if (index > arr->len)
+			kk_runtime_error("Index %d out of range %d.", index, arr->len);
+
+		kk_gcobj_dec(&arr->data[index]);
+		arr->data[index] = val;
+		break;
+
+	case kk_type_string:;
+		if (val.type != kk_type_char)
+			kk_runtime_error("Trying to set string value with %s.", type_strs[val.type]);
+
+		char *s = (char *)(GCOBJ(the_stack->cell)->data);
+
+		int len = strlen(s);
+		if (index > len)
+			kk_runtime_error("Index %d out of range %d.", index, len);
+
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = s[index] }, 0);
+		break;
+
+	case kk_type_cons:;
+		kk_cons *list = (kk_cons *)(GCOBJ(the_stack->cell)->data);
+
+		for (int i=0; i < index && list; i++) {
+			kk_type type = kk_cell_abstype(list->cdr);
+
+			if (type == kk_type_null)
+				kk_runtime_error("Index %d out of range %d.", index, i);
+
+			if (type != kk_type_cons)
+				kk_runtime_error("Trying to index not a list.");
+
+			list = (kk_cons *)(GCOBJ(list->cdr)->data);
+		}
+
+		kk_gcobj_dec(&list->car);
+		list->car = val;
+		break;
+
+	default:
+		kk_runtime_error("Cannot iterate over %s.", type_strs[GCOBJ(the_stack->cell)->type]);
+
+	}
+}
+
+
 int main() {
 	kk_line = 0 ;
-	kk_cell USER_VAR_i = {0};
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
 
 	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
-
-	kk_line = 0 ;
-	kk_cell_copy(&USER_VAR_i, &the_stack->cell);
-	kk_line = 0 ;
-	kk_gcobj_dec(&the_stack->cell);
-	kk_list_popn(&the_stack, 1 );
+	kk_BUILTIN_mka();
 
 	kk_line = 0 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
 
 	kk_line = 2 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+	kk_BUILTIN_get();
 
 	kk_line = 2 ;
-	for (;;) {
-		{
-			kk_line = 4 ;
-			kk_list_push_front(&the_stack, USER_VAR_i, 0);
+	kk_BUILTIN_s__BIGGER__();
 
-			kk_line = 4 ;
-			kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 46 }, 0 );
+	kk_list_popn(&the_stack, 1);
 
-			kk_line = 4 ;
-			kk_BUILTIN___SMALLER__();
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
 
-			kk_line = 4 ;
-			tmp_cell = kk_list_popget(&the_stack);
-			tmp_res = kk_is_true(tmp_cell);
-			kk_gcobj_dec(&tmp_cell);
-			if (!tmp_res) break;
-		kk_line = 4 ;
-		}
-		kk_line = 4 ;
-		kk_BUILTIN_tuck();
+	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
 
-		kk_line = 5 ;
-		kk_BUILTIN___PLUS__();
+	kk_line = 4 ;
+	kk_BUILTIN_set();
 
-		kk_line = 5 ;
-		kk_list_push_front(&the_stack, USER_VAR_i, 0);
+	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
 
-		kk_line = 7 ;
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+	kk_line = 6 ;
+	kk_BUILTIN_get();
 
-		kk_line = 7 ;
-		kk_BUILTIN___PLUS__();
-
-		kk_line = 7 ;
-		kk_cell_copy(&USER_VAR_i, &the_stack->cell);
-		kk_line = 7 ;
-		kk_gcobj_dec(&the_stack->cell);
-		kk_list_popn(&the_stack, 1 );
-
-	kk_line = 7 ;
-	}
-	kk_line = 8 ;
-	kk_BUILTIN___PLUS__();
-
-	kk_line = 10 ;
+	kk_line = 6 ;
 	kk_BUILTIN_s__BIGGER__();
 
 

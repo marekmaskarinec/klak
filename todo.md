@@ -39,7 +39,7 @@
 	- [ ] - proper testing
 - [ ] - normal idents in errors
 - [ ] - libtcc
-- [ ] - cons
+- [x] - cons
 - [ ] - hashmaps
 - [ ] - arrays
 - [ ] - file including

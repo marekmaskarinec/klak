@@ -1,12 +1,8 @@
 
-:i 2  .i
+10 mka
 
-0 1
+0 get s>
 
-loop i 10 < then
-	tuck +
+0 10 set
 
-	i 1 + .i
-pool
-
-+ s>
+0 get s>
