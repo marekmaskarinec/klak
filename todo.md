@@ -88,11 +88,11 @@
 
 ## stack operation
 
-- [ ] - dup  # duplicates the value on the front
-- [ ] - swap # swaps the front with the second element
-- [ ] - rot  # rotates front 3 items
-- [ ] - tuck # duplicate the top item below the second slot
-- [ ] - over # duplicate the second item to the front 
+- [x] - dup  # duplicates the value on the front
+- [x] - swap # swaps the front with the second element
+- [x] - rot  # rotates front 3 items
+- [x] - tuck # duplicate the top item below the second slot
+- [x] - over # duplicate the second item to the front 
 
 
 ## arrays
@@ -109,18 +109,18 @@
 
 - [ ] - gnth, snth and len are usable with strings
 - [ ] - grow     # grows a string len by reallocating it (slow) ( string to-add -- result )
-- [ ] - cat      # adds a string to string (even grows)
 - [ ] - contains # returns t if string contains a substring
 - [ ] - split    # splits a string into an array of strings ( string separator -- result )
 
 
 ## cons
 
-- [x] - cons # pops two values and creates cons cell.
+- [x] - cons   # ( car cdr -- cons )
 - [ ] - contains gnth, snth, len, find and stack operators, but prefixed with l
-- [ ] - ltoa # converts a list to an array
-- [ ] - car  # returns the car
-- [ ] - cdr  # returns the cdr
+- [ ] - ltoa   # ( cons -- array )
+- [x] - car    # ( cons -- cons car )
+- [x] - cdr    # ( cons -- cons cdr )
+- [x] - uncons # ( cons -- car cdr )
 
 
 ## tables

@@ -109,6 +109,7 @@ void kk_gcobj_free(kk_gcobj *o) {
 		free(o->data);
 		break;
 	}
+
 	free(o);
 }
 
@@ -270,11 +271,14 @@ void kk_BUILTIN___PLUS__(void) {
 			kk_gcobj *aobj = (kk_gcobj *)a.ptr_val;
 			kk_gcobj *bobj = (kk_gcobj *)b.ptr_val;
 
-			aobj->data = realloc(
-				aobj->data,
-				strlen((char *)aobj->data) + strlen((char *)bobj->data));
+			bobj->data = realloc(
+				bobj->data,
+				strlen((char *)aobj->data) + strlen((char *)bobj->data) + 1);
 
-			kk_list_push_front(&the_stack, a, 0);
+			strcat((char *)bobj->data, (char *)aobj->data);
+
+			kk_list_push_front(&the_stack, b, 0);
+			kk_gcobj_dec(&a);
 			kk_gcobj_dec(&b);
 			break;
 
@@ -515,42 +519,214 @@ void kk_BUILTIN_uncons(void) {
 	kk_gcobj_dec(&cell);
 }
 
+void kk_BUILTIN_dup(void) {
+	if (!the_stack)
+		kk_runtime_error("Trying to dup null stack.");
+
+	kk_list_push_front(&the_stack, the_stack->cell, 0);
+}
+
+void kk_BUILTIN_swap(void) {
+	if (!the_stack || !the_stack->next)
+		kk_runtime_error("Cannot swap on a stack shorter than 2.");
+
+	tmp_cell = the_stack->cell;
+	the_stack->cell = the_stack->next->cell;
+	the_stack->next->cell = tmp_cell;
+}
+
+void kk_BUILTIN_rot(void) {
+	kk_cell first = kk_list_popget(&the_stack);
+	kk_cell second = kk_list_popget(&the_stack);
+	kk_cell third = kk_list_popget(&the_stack);
+
+	kk_list_push_front(&the_stack, second, 0);
+	kk_gcobj_dec(&second);
+
+	kk_list_push_front(&the_stack, first, 0);
+	kk_gcobj_dec(&first);
+
+	kk_list_push_front(&the_stack, third, 0);
+	kk_gcobj_dec(&third);
+}
+
+void kk_BUILTIN_tuck(void) {
+	if (!the_stack || !the_stack->next)
+		kk_runtime_error("Cannot tuck a stack shorter than 2.");
+
+	kk_list_push_front(&the_stack, the_stack->cell, 2);
+}
+
+void kk_BUILTIN_over(void) {
+	if (!the_stack || !the_stack->next)
+		kk_runtime_error("Cannot over a stack shorter than 2.");
+
+	kk_list_push_front(&the_stack, the_stack->next->cell, 0);
+}
+
 
 int main() {
 	kk_line = 0 ;
-	{
-		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
-		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
-		tmp->type = kk_type_string; tmp->refs = 0;
-		tmp->data = malloc(8 );
-		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
-		((char *)tmp->data)[7 ] = 0;
-		strcpy(tmp->data, "string1");
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
-	}
-
-	kk_line = 0 ;
-	{
-		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
-		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
-		tmp->type = kk_type_string; tmp->refs = 0;
-		tmp->data = malloc(8 );
-		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
-		((char *)tmp->data)[7 ] = 0;
-		strcpy(tmp->data, "string2");
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
-	}
-
-	kk_line = 0 ;
-	kk_BUILTIN_cons();
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
 
 	kk_line = 0 ;
 	kk_BUILTIN_s__BIGGER__();
 
 	kk_line = 0 ;
-	kk_BUILTIN_uncons();
+	kk_BUILTIN_dup();
 
 	kk_line = 0 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 0 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 0 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 0 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 0 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+
+	kk_line = 2 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 2 ;
+	kk_BUILTIN_swap();
+
+	kk_line = 2 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 2 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 2 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 2 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+
+	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 3 }, 0 );
+
+	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 4 }, 0 );
+
+	kk_line = 4 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 4 ;
+	kk_BUILTIN_rot();
+
+	kk_line = 4 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 4 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 4 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 4 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 4 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 4 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_line = 6 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+
+	kk_line = 6 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 3 }, 0 );
+
+	kk_line = 6 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 6 ;
+	kk_BUILTIN_tuck();
+
+	kk_line = 6 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 6 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 6 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 6 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 6 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 6 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 6 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_line = 8 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+
+	kk_line = 8 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 3 }, 0 );
+
+	kk_line = 8 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 8 ;
+	kk_BUILTIN_over();
+
+	kk_line = 8 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_line = 8 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 8 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 8 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 8 ;
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
+	kk_line = 8 ;
 	kk_BUILTIN_s__BIGGER__();
 
 
