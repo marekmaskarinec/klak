@@ -147,6 +147,42 @@ kk_type kk_cell_abstype(kk_cell cell) {
 	return cell.type;
 }
 
+void kk_cell_put(kk_cell cell) {
+	switch (kk_cell_abstype(cell)) {
+	case kk_type_char:
+		printf("%c(%d)", cell.char_val, cell.char_val);
+		break;
+	case kk_type_float:
+		printf("%f", cell.float_val);
+		break;
+	case kk_type_string:
+		printf("\"%s\"", (char *)(GCOBJ(cell)->data));
+		break;
+	case kk_type_cons:
+		printf("( ");
+		kk_cell_put(CONS(GCOBJ(cell))->car);
+		printf(" . ");
+		kk_cell_put(CONS(GCOBJ(cell))->cdr);
+		printf(" )");
+		break;
+	case kk_type_array:
+		printf("[ ");
+
+		kk_array *arr = ((kk_array *)GCOBJ(cell)->data);
+
+		for (int i=0; i < arr->len; i++) {
+			kk_cell_put(arr->data[i]);
+			printf(" ");
+		}
+
+		printf("]");
+		break;
+	case kk_type_null:
+		printf("null");
+		break;
+	}
+}
+
 void kk_node_free(kk_node *node) { }
 
 void kk_list_push_front(kk_node **list, kk_cell data, int off) {
@@ -468,30 +504,8 @@ void kk_BUILTIN_s__BIGGER__(void) {
 	printf("<%d> ", kk_list_len(the_stack));
 
 	for (kk_node *node=the_stack; node; node = node->next) {
-		kk_cell cell = node->cell;
-
-		switch (cell.type) {
-		case kk_type_char:
-			printf("%c(%d) ", cell.char_val, cell.char_val);
-			break;
-		case kk_type_float:
-			printf("%f ", cell.float_val);
-			break;
-		case kk_type_gcobj:
-			switch (((kk_gcobj *)cell.ptr_val)->type) {
-			case kk_type_string:
-				printf("\"%s\" ", (char *)((kk_gcobj *)cell.ptr_val)->data);
-				break;
-			default:
-				printf("{gcobj %x %d} ", ((kk_gcobj *)cell.ptr_val)->data, ((kk_gcobj *)cell.ptr_val)->refs);
-			}
-
-			break;
-
-		case kk_type_null:
-			printf("null ");
-			break;
-		}
+		kk_cell_put(node->cell);
+		printf(" ");
 	}
 
 	printf("\n");
@@ -721,6 +735,15 @@ void kk_BUILTIN_set(void) {
 	}
 }
 
+void kk_BUILTIN_put(void) {
+	kk_cell cell = kk_list_popget(&the_stack);
+
+	kk_cell_put(cell);
+	printf("\n");
+
+	kk_gcobj_dec(&cell);
+}
+
 int main() {
 	kk_line = 0 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
@@ -729,26 +752,44 @@ int main() {
 	kk_BUILTIN_mka();
 
 	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 12 }, 0 );
 
-	kk_line = 1 ;
-	kk_BUILTIN_mka();
+	kk_line = 2 ;
 
-	kk_line = 1 ;
-	kk_BUILTIN___PLUS__();
-
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 11 }, 0 );
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
-
-	kk_BUILTIN_set();
-
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 11 }, 0 );
-
-	kk_BUILTIN_get();
+	kk_line = 2 ;
+	{
+		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
+		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
+		tmp->type = kk_type_string; tmp->refs = 0;
+		tmp->data = malloc(7 );
+		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
+		((char *)tmp->data)[6 ] = 0;
+		strcpy(tmp->data, "string");
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
+	}
 
 	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10.200000 }, 0 );
+
+	kk_line = 4 ;
+	kk_BUILTIN_cons();
+
+	kk_line = 4 ;
+
+	kk_line = 4 ;
+	{
+		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
+		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
+		tmp->type = kk_type_string; tmp->refs = 0;
+		tmp->data = malloc(8 );
+		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
+		((char *)tmp->data)[7 ] = 0;
+		strcpy(tmp->data, "string2");
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
+	}
+
+	kk_line = 6 ;
+
 	kk_BUILTIN_s__BIGGER__();
-
 
 }

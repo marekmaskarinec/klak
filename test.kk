@@ -1,7 +1,9 @@
 
-10 mka
-10 mka
-+
+10 mka put
 
-get 11
-s>
+12 put
+
+"string" 10.20 cons put
+
+"string2" put
+

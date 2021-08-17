@@ -23,7 +23,8 @@ fn main() {
 		[]str{}, 
 		[]str{"__PLUS__", "__SMALLER__", "__EQUAL__", "__BIGGER__", "__SMALLER____EQUAL__",
 			"__BIGGER____EQUAL__", "__MINUS__", "__MUL__", "__DIV__", "__MOD__", "__NOT____EQUAL__",
-			"s__BIGGER__", "cons", "dup", "swap", "rot", "tuck", "over", "mka", "get", "set"},
+			"s__BIGGER__", "cons", "dup", "swap", "rot", "tuck", "over", "mka", "get", "set",
+			"put"},
 		0, 0, 0, 0, 0, false, []int{}, list.List{}}
 
 	for p.parse_next(lexer.tok_eof, "") && !p.had_error { }	
