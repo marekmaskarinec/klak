@@ -69,7 +69,7 @@ kk_bool tmp_res = 0;
 int kk_line = 0;
 char *kk_file = NULL;
 const char *type_strs[] = {
-	"null", "float", "gc object", "char", "string", "cons"
+	"null", "float", "gc object", "char", "string", "cons", "array"
 };
 
 void kk_runtime_error(char *msg, ...) {
@@ -107,6 +107,10 @@ void kk_gcobj_free(kk_gcobj *o) {
 	case kk_type_cons:
 		kk_gcobj_dec(&CONS(o)->car);
 		kk_gcobj_dec(&CONS(o)->cdr);
+		free(o->data);
+		break;
+	case kk_type_array:
+		free(((kk_array *)o->data)->data);
 		free(o->data);
 		break;
 	}
@@ -267,7 +271,7 @@ void kk_BUILTIN___PLUS__(void) {
 		switch(((kk_gcobj *)a.ptr_val)->type) {
 		case kk_type_string:
 			if (((kk_gcobj *)b.ptr_val)->type != kk_type_string)
-				kk_runtime_error("+: Cannot add string to %s.", type_strs[((kk_gcobj *)b.ptr_val)->type]);
+				kk_runtime_error("Cannot add string to %s.", type_strs[((kk_gcobj *)b.ptr_val)->type]);
 			
 			kk_gcobj *aobj = (kk_gcobj *)a.ptr_val;
 			kk_gcobj *bobj = (kk_gcobj *)b.ptr_val;
@@ -283,8 +287,27 @@ void kk_BUILTIN___PLUS__(void) {
 			kk_gcobj_dec(&b);
 			break;
 
+		case kk_type_array:
+			if (kk_cell_abstype(b) != kk_type_array)
+				kk_runtime_error("Cannot add array to %s.", type_strs[kk_cell_abstype(b)]);
+
+			kk_array *aa = (kk_array *)(((kk_gcobj *)(a.ptr_val))->data);
+			kk_array *ba = (kk_array *)(GCOBJ(b)->data);
+
+			ba->len += aa->len;
+
+			ba->data = realloc(ba->data, ba->len * sizeof(kk_cell));
+			memcpy(ba->data + (ba->len - aa->len),
+				aa->data, aa->len * sizeof(kk_cell));
+
+			kk_list_push_front(&the_stack, b, 0);
+			kk_gcobj_dec(&a);
+			kk_gcobj_dec(&b);
+
+			break;
+
 		default:
-			kk_runtime_error("+: Cannot add %s.", type_strs[((kk_gcobj *)a.ptr_val)->type]);
+			kk_runtime_error("Cannot add %s.", type_strs[((kk_gcobj *)a.ptr_val)->type]);
 
 		}
   
@@ -292,7 +315,7 @@ void kk_BUILTIN___PLUS__(void) {
 	
 	case kk_type_float:
 		if (b.type != kk_type_float)
-			kk_runtime_error("+: Cannot add float to %s.", type_strs[b.type]);
+			kk_runtime_error("Cannot add float to %s.", type_strs[b.type]);
 
 		a.float_val += b.float_val;
 
@@ -300,7 +323,7 @@ void kk_BUILTIN___PLUS__(void) {
 		break;
 
 	default:
-		kk_runtime_error("+: Cannot add %s.", type_strs[a.type]);
+		kk_runtime_error("Cannot add %s.", type_strs[a.type]);
 
 	}
 }
@@ -573,6 +596,7 @@ void kk_BUILTIN_mka(void) {
 
 	kk_array *arr = malloc(sizeof(kk_array));
 	arr->data = calloc(sizeof(kk_cell), lencell.float_val);
+	arr->len = lencell.float_val;
 
 	kk_gcobj *o = malloc(sizeof(kk_gcobj));
 	o->refs = 0; o->type = kk_type_array;
@@ -697,7 +721,6 @@ void kk_BUILTIN_set(void) {
 	}
 }
 
-
 int main() {
 	kk_line = 0 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
@@ -706,32 +729,25 @@ int main() {
 	kk_BUILTIN_mka();
 
 	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
-
-	kk_line = 2 ;
-	kk_BUILTIN_get();
-
-	kk_line = 2 ;
-	kk_BUILTIN_s__BIGGER__();
-
-	kk_list_popn(&the_stack, 1);
-
-	kk_line = 2 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
-
-	kk_line = 4 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
 
+	kk_line = 1 ;
+	kk_BUILTIN_mka();
+
+	kk_line = 1 ;
+	kk_BUILTIN___PLUS__();
+
 	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 11 }, 0 );
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
+
 	kk_BUILTIN_set();
 
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 11 }, 0 );
 
-	kk_line = 6 ;
 	kk_BUILTIN_get();
 
-	kk_line = 6 ;
+	kk_line = 4 ;
 	kk_BUILTIN_s__BIGGER__();
 
 

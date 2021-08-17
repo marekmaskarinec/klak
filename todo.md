@@ -108,7 +108,6 @@
 ## strings
 
 - [ ] - gnth, snth and len are usable with strings
-- [ ] - grow     # grows a string len by reallocating it (slow) ( string to-add -- result )
 - [ ] - contains # returns t if string contains a substring
 - [ ] - split    # splits a string into an array of strings ( string separator -- result )
 
@@ -125,7 +124,7 @@
 
 ## tables
 
-- [ ] - mkt  # makes a table
+- [ ] - mkt # makes a table
 - [ ] - get # gets an element [ table key ]
 - [ ] - set # sets an element [ table key value ]
 
