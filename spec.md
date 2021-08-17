@@ -259,10 +259,13 @@ Including is done using the `include` word.
 ## IO
 
 ```
+put     simplest way to print ( value -- )
 format  like in common lisp ( args... format-string stream -- optional-output )
 s>      prints the stack
-read    read from stdin ( -- string )
 open    open a file ( path mode -- FILE )
+read    read all from file ( FILE -- string )
+readl   read line from file ( FILE -- string )
+readb   read byte from file ( FILE -- byte )
 ```
 
 ## bitwise operators

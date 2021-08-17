@@ -8,8 +8,6 @@
 	- [x] - c gen
 	- [x] - errors
 - [x] - word
-- [ ] - push front
-- [ ] - push back
 - [x] - constant
 - [ ] - keyword
 	- [x] - mkw
@@ -115,7 +113,6 @@
 ## cons
 
 - [x] - cons   # ( car cdr -- cons )
-- [ ] - contains gnth, snth, len, find and stack operators, but prefixed with l
 - [ ] - ltoa   # ( cons -- array )
 - [x] - car    # ( cons -- cons car )
 - [x] - cdr    # ( cons -- cons cdr )

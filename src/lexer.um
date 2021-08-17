@@ -103,6 +103,10 @@ fn (l: ^Lexer) next_char(): char {
 		return char(0)
 	}
 
+	if l.buf[l.pos] == '\n' {
+		l.lineno++
+	}
+
 	return l.buf[l.pos]
 }
 
@@ -117,9 +121,6 @@ fn (l: ^Lexer) get_before(b: char): str {
 
 fn (l: ^Lexer) next(): Token {
 	for c := l.peek_char(); c == ' ' || c == '\n'; c = l.peek_char() {
-		if c == '\n' {
-			l.lineno++
-		}
 		c = l.next_char()
 	}
 
