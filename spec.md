@@ -220,17 +220,53 @@ Prototypes are done by leaving out the body.
 mkw foo
 ```
 
-## multiple files (WIP)
+## preprocessor
 
-Files are included similarly to c.
-There are source files and headers.
-The implementation includes all headers only once and in the beggining.
+Klak features a preprocessor, not dissimilar to c's one.
+All preprocessor commands are prefixed with '@' and are located on the beginning of a line.
 
-Including is done using the `include` word.
+### @def
+
+Defines a macro. It can, but doesn't have to have a value.
 
 ```
-"file.kh" include
-"file2.kh" "file3.kh" include
+@def nip swap .
+@def DEBUG
+@def DEFAULT_LEN 256
+```
+
+### @udf
+
+If a macro is defined, undefines it.
+
+```
+@def HELLO
+
+@idf HELLO
+	; I get compiled
+@fid
+
+@udf HELLO
+
+@idf HELLO
+	; I don't
+@fid
+```
+
+### @idf
+
+Skips everything before `@fid`, if argument is defined.
+
+### @ind
+
+Opposite of `@idf`
+
+### @inc
+
+Includes a file.
+
+```
+@inc "std.kh"
 ```
 
 ## standard words

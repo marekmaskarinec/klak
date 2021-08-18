@@ -214,6 +214,10 @@ fn (g: ^Gen) skip() {
 	g.write(g.indent + "continue;\n")
 }
 
+fn (g: ^Gen) file_mark(filename: str) {
+	g.write(g.indent + "strcpy(kk_file, \"" + filename  + "\");\n")
+}
+
 fn (g: ^Gen) print() {
 	printf("%s\n", g.buf.to_str())
 	printf("int main() {\n%s\n}\n", g.main_fn.to_str())

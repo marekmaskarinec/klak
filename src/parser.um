@@ -433,6 +433,9 @@ fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool {
 	case lexer.tok_word:
 		p.parse_word(tok.v)
 
+	case lexer.tok_file:
+		p.g.file_mark(tok.v)
+
 	default:
 		p.err("Unimplemented feature ~a.", ErrArgs{tok.t})
 		tok.print()

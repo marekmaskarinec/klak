@@ -2,9 +2,11 @@
 import (
 	"std.um"
 	"gen.um"
+	"pre.um"
 	"lexer.um"
 	"parser.um"
 	"common.um"
+	"../lib/map.um"
 	"../lib/libs/list.um"
 	"../lib/libs/strings.um"
 )
@@ -15,6 +17,12 @@ fn main() {
 	std.fclose(f)
 
 	inp = strings.replace(inp, "\t", " ")
+
+	pp := pre.Preproc{0, strings.split(inp, "\n"), map.Map{}, common.errorf, false, ""}
+
+	inp = pp.do()
+
+	printf("%s\n", inp)
 
 	g := gen.Gen{[]str{}, strings.mk_builder(), strings.mk_builder(), "\t", false, 0}
 	l := lexer.Lexer{inp, 0, 1, 0}

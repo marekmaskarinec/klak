@@ -40,8 +40,15 @@
 - [x] - cons
 - [ ] - hashmaps
 - [x] - arrays
-- [ ] - file including
-- [ ] - macros?
+- [ ] - preprocessor
+	- [x] - def, udf
+	- [x] - idf, ind
+	- [x] - macro expansion
+	- [ ] - include
+		- [x] - insert content
+		- [x] - proper paths
+		- [x] - line numbers
+		- [ ] - file names
 
 # standard functions
 

@@ -1,0 +1,177 @@
+
+import (
+	"std.um"
+	"common.um"
+	"../lib/map.um"
+	"../lib/libs/strings.um"
+	"../lib/libs/filepath.um"
+)
+
+type Preproc* = struct {
+	lno: int
+	lines: []str
+	defs: map.Map
+
+	err_fn: fn(msg: str, values: []interface{}, lineno, charno: int)
+	had_error: bool
+
+	dir: str
+}
+
+fn (p: ^Preproc) err(msg: str) {
+	p.had_error = true
+
+	p.err_fn(msg, []interface{}{}, p.lno, 0)
+}
+
+fn (p: ^Preproc) def() {
+	split := strings.split(p.lines[p.lno], " ")
+
+	if len(split) == 1 {
+		p.err("@def takes arguments.")
+	}
+
+	key := split[1]
+	val := ""
+
+	if len(split) > 2 {
+		val = strings.join(slice(split, 2, len(split)), " ")
+	}
+
+	p.defs.set(key, val)
+}
+
+fn (p: ^Preproc) udf() {
+	split := strings.split(p.lines[p.lno], " ")
+
+	if len(split) != 2 {
+		p.err("@def takes one argument.")
+	}
+
+	p.defs.del(split[1])
+}
+
+fn (p: ^Preproc) eat() {
+	for p.lno < len(p.lines) && !p.had_error {
+		if len(p.lines[p.lno]) == 0 {
+			p.lno++
+			continue
+		}
+
+		if p.lines[p.lno][0] == '@' {
+			cmd := strings.split(p.lines[p.lno], " ")[0]
+			
+			if cmd == "@ifd" || cmd == "@ind" {
+				p.eat()
+			} else if cmd == "@fid" {
+				p.lines[p.lno] = ""
+				return
+			}
+		}
+		p.lines[p.lno] = ""
+	}
+}
+
+fn (p: ^Preproc) idf() {
+	split := strings.split(p.lines[p.lno], " ")
+	
+	if len(split) != 2 {
+		p.err("@idf takes one argument.")
+	}
+
+	if ^str(p.defs.get(split[1])) == null {
+		p.eat()
+	}
+}
+
+fn (p: ^Preproc) ind() {
+	split := strings.split(p.lines[p.lno], " ")
+	
+	if len(split) != 2 {
+		p.err("@inf takes one argument.")
+	}
+
+	if ^str(p.defs.get(split[1])) != null {
+		p.eat()
+	}
+}
+
+fn (p: ^Preproc) inc() {
+	split := strings.split(p.lines[p.lno], " ")
+	
+	if len(split) != 2 {
+		p.err("@inc takes one argument.")
+	}
+
+	if split[1][0] != '"' || split[1][len(split[1])-1] != '"' {
+		p.err("Inc argument isn't in quotes.")
+	}
+
+	path := split[1]
+	path = slice(path, 1, len(path)-1)
+
+	f := std.fopen(p.dir + path, "r")
+	flines := strings.split(common.readall(f), "\n")
+	std.fclose(f)
+
+	p.lines[p.lno] = "@_setdir " + p.dir
+
+	flines = append(
+		flines,
+		[]str{"@line" + std.itoa(p.lno)}) // todo file names
+
+	p.dir, path = filepath.split(p.dir + path)
+
+	rest := slice(p.lines, p.lno, len(p.lines))
+	p.lines = append(
+		slice(p.lines, 0, p.lno),
+		flines)
+	p.lines = append(p.lines, rest)
+}
+
+fn (p: ^Preproc) do(): str {
+	for p.lno < len(p.lines) {
+		if len(p.lines[p.lno]) == 0 {
+			p.lno++
+			continue
+		}
+
+		if p.lines[p.lno][0] == '@' {
+			cmd := strings.split(p.lines[p.lno], " ")[0]
+
+			if cmd == "@def" {
+				p.def()
+				p.lines[p.lno] = ""
+			} else if cmd == "@udf" {
+				p.udf()
+				p.lines[p.lno] = ""
+			} else if cmd == "@idf" {
+				p.idf()
+				p.lines[p.lno] = ""
+			} else if cmd == "@ind" {
+				p.ind()
+				p.lines[p.lno] = ""
+			} else if cmd == "@fid" {
+				p.lines[p.lno] = ""
+			} else if cmd == "@_setdir" {
+				p.dir = strings.split(p.lines[p.lno], " ")[1]
+				p.lines[p.lno] = ""
+			} else if cmd == "@inc" {
+				p.inc()
+			}
+		} else {
+			split := strings.split(p.lines[p.lno], " ")
+
+			for i, w in split {
+				if macro := ^str(p.defs.get(w)); macro != null {
+					split[i] = macro^
+				}
+			}
+			p.lines[p.lno] = strings.join(split, " ")
+		}
+
+		p.lno++
+	}
+
+	return strings.join(p.lines, "\n")
+}

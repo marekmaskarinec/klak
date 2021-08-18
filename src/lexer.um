@@ -32,6 +32,7 @@ const (
 	tok_pop*
 	tok_lambda_open*
 	tok_lambda_close*
+	tok_file*
 )
 
 type Token* = struct {
@@ -126,6 +127,22 @@ fn (l: ^Lexer) next(): Token {
 
 	tok := Token{ "", tok_null, l.lineno, l.charno, 1 }
 	switch l.peek_char() {
+	case '@':
+		val := l.get_before(' ')
+
+		if len(val) < 5 {
+			tok.v = val
+			return tok
+		}
+
+		if slice(val, 0, 5) == "@line" {
+			l.lineno = std.atoi(slice(val, 5, len(val)))
+			return l.next()
+		} else if slice(val, 0, 5) == "@file" {
+			tok.t = tok_file
+			tok.v = slice(val, 5, len(val)-1)
+		}
+
 	case ';':
 		l.get_before('\n')
 		return l.next()
@@ -267,6 +284,6 @@ fn (l: ^Lexer) peek(): Token {
 }
 
 fn (t: ^Token) print() {
-	types := []str{"null", "char", "word-repr-char", "num-repr-char", "string", "var assignement", "word", "push-front", "push-back", "propagate", "constant", "keyword", "int", "hex-int", "float", "eof", "var-declaration", "pop", "lopen", "lclose"}
+	types := []str{"null", "char", "word-repr-char", "num-repr-char", "string", "var assignement", "word", "push-front", "push-back", "propagate", "constant", "keyword", "int", "hex-int", "float", "eof", "var-declaration", "pop", "lopen", "lclose", "file mark"}
 	printf("Token: { type: %s, value: \"%s\", pos: (%d, %d), mod: %d }\n", types[t.t], t.v, t.lineno, t.charno, t.num_mod)
 }
