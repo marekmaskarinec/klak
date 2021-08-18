@@ -64,11 +64,11 @@
 ## comparation
 
 - [x] - =  # equals
+- [x] - /=
 - [x] - >  # bigger
 - [x] - <  # smaller
 - [x] - <= # smaller or equal
 - [x] - >= # bigger or equal
-- [x] - != # not equal
 
 
 ## bitwise operators

@@ -298,6 +298,11 @@ void kk_BUILTIN___EQUAL__(void) {
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = res }, 0);
 }
 
+void kk_BUILTIN___DIV____EQUAL__(void) {
+	kk_BUILTIN___EQUAL__();
+	the_stack->cell.char_val = !the_stack->cell.char_val;
+}
+
 void kk_BUILTIN___PLUS__(void) {
 	kk_cell a = kk_list_popget(&the_stack);
 	kk_cell b = kk_list_popget(&the_stack);
@@ -478,20 +483,6 @@ void kk_BUILTIN___BIGGER____EQUAL__(void) {
 
 	if (a.type == b.type && a.type == kk_type_float) {
 		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = b.float_val >= a.float_val }, 0);
-	} else {
-		kk_gcobj_dec(&a);
-		kk_gcobj_dec(&b);
-
-		kk_runtime_error("Cannot multiply %s with %s.", type_strs[a.type]);
-	}
-}
-
-void kk_BUILTIN___NOT____EQUAL__(void) {
-	kk_cell a = kk_list_popget(&the_stack);
-	kk_cell b = kk_list_popget(&the_stack);
-
-	if (a.type == b.type && a.type == kk_type_float) {
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = b.float_val != a.float_val }, 0);
 	} else {
 		kk_gcobj_dec(&a);
 		kk_gcobj_dec(&b);
@@ -778,81 +769,76 @@ void kk_BUILTIN_len(void) {
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = res }, 0);
 }
 
+void kk_BUILTIN_nip(void) {
+	kk_BUILTIN_swap();
+	tmp_cell = kk_list_popget(&the_stack);
+	kk_gcobj_dec(&tmp_cell);
+}
+
+void kk_BUILTIN_num(void) {
+	kk_cell cell = kk_list_popget(&the_stack);
+
+	kk_float res;
+
+	switch (kk_cell_abstype(cell)) {
+	case kk_type_string:
+		res = atof((char *)GCOBJ(cell)->data);
+		break;
+	case kk_type_char:
+		res = cell.char_val;
+		break;
+	case kk_type_null:
+		res = 0;
+		break;
+	case kk_type_float:
+		res = cell.float_val; // it should not error on float.
+		break;
+	default:
+		kk_runtime_error("Cannot convert %s to num.", type_strs[kk_cell_abstype(cell)]);
+	}
+
+	kk_gcobj_dec(&cell);
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = res }, 0);
+}
+
+void kk_BUILTIN_char(void) {
+	kk_cell cell = kk_list_popget(&the_stack);
+
+	kk_char res;
+
+	switch (kk_cell_abstype(cell)) {
+	case kk_type_char:
+		res = cell.char_val;
+		break;
+	case kk_type_null:
+		res = 0;
+		break;
+	case kk_type_float:
+		res = cell.float_val;
+		break;
+	default:
+		kk_runtime_error("Cannot convert %s to char.", type_strs[kk_cell_abstype(cell)]);
+	}
+
+	kk_gcobj_dec(&cell);
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = res }, 0);
+}
+
 
 int main() {
 	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 67 }, 0 );
 
 	kk_line = 1 ;
-	kk_BUILTIN_mka();
-
-	kk_line = 1 ;
-	kk_BUILTIN_len();
-
-	kk_line = 1 ;
-	kk_BUILTIN_swap();
+	kk_BUILTIN_dup();
 
 	kk_line = 1 ;
 	kk_BUILTIN_put();
 
 	kk_line = 1 ;
-	kk_BUILTIN_put();
+	kk_BUILTIN_char();
 
 	kk_line = 1 ;
-	{
-		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
-		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
-		tmp->type = kk_type_string; tmp->refs = 0;
-		tmp->data = malloc(6 );
-		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
-		((char *)tmp->data)[5 ] = 0;
-		strcpy(tmp->data, "hello");
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
-	}
-
-	kk_line = 3 ;
-	kk_BUILTIN_len();
-
-	kk_line = 3 ;
-	kk_BUILTIN_swap();
-
-	kk_line = 3 ;
-	kk_BUILTIN_put();
-
-	kk_line = 3 ;
-	kk_BUILTIN_put();
-
-	kk_line = 3 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
-
-	kk_line = 5 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
-
-	kk_line = 5 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
-
-	kk_line = 5 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_null }, 0 );
-
-	kk_line = 5 ;
-	kk_BUILTIN_cons();
-
-	kk_line = 5 ;
-	kk_BUILTIN_cons();
-
-	kk_line = 5 ;
-	kk_BUILTIN_cons();
-
-	kk_line = 5 ;
-	kk_BUILTIN_len();
-
-	kk_line = 5 ;
-	kk_BUILTIN_swap();
-
-	kk_line = 5 ;
-	kk_BUILTIN_put();
-
-	kk_line = 5 ;
 	kk_BUILTIN_put();
 
 

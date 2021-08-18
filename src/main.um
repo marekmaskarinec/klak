@@ -30,22 +30,22 @@ fn main() {
 		 0, 0, false,
 		[]str{}, 
 		[]str{"__PLUS__", "__SMALLER__", "__EQUAL__", "__BIGGER__", "__SMALLER____EQUAL__",
-			"__BIGGER____EQUAL__", "__MINUS__", "__MUL__", "__DIV__", "__MOD__", "__NOT____EQUAL__",
+			"__BIGGER____EQUAL__", "__MINUS__", "__MUL__", "__DIV__", "__MOD__", "__DIV____EQUAL__",
 			"s__BIGGER__", "cons", "dup", "swap", "rot", "tuck", "over", "mka", "get", "set",
-			"put", "len", "uncons"},
+			"put", "len", "uncons", "num", "char"},
 		0, 0, 0, 0, 0, false, []int{}, list.List{}}
 
 	for p.parse_next(lexer.tok_eof, "") && !p.had_error { }	
 
-	if p.if_nest_size + p.loop_nest_size > 0 {
-		p.err("Unended if/loop statement.", []interface{}{})
-	}
-
-	if p.g.in_block {
-		p.err("Unended word declaration.", []interface{}{})
-	}
-
 	if !p.had_error {
+		if p.if_nest_size + p.loop_nest_size > 0 {
+			p.err("Unended if/loop statement.", []interface{}{})
+		}
+  
+		if p.g.in_block {
+			p.err("Unended word declaration.", []interface{}{})
+		}
+
 		p.g.print()
 	}
 }
