@@ -195,11 +195,15 @@ fn (l: ^Lexer) next(): Token {
 		tok.v = l.get_before(' ')
 		tok.t = tok_lambda_close
 	default:
-		tok.v = fix_ident(l.get_before(' '))
+		tok.v = l.get_before(' ')
 
-		if is_number(tok.v[0]) {
+		if is_number(tok.v[0]) || tok.v[0] == '-' {
 			whole_num := true
 			for i, c in tok.v {
+				if i == 0 && c == '-' {
+					continue
+				}
+
 				if i == 1 && c == 'x' {
 					continue
 				}
@@ -217,6 +221,7 @@ fn (l: ^Lexer) next(): Token {
 
 			if whole_num {
 				tok.t = get_number_type(tok.v)
+				return tok
 			} else {
 				l.pos -= len(tok.v)
 				l.lineno = tok.lineno
@@ -243,6 +248,8 @@ fn (l: ^Lexer) next(): Token {
 			tok.t = tok_word
 		}
 	}
+
+	tok.v = fix_ident(tok.v)
 
 	return tok
 }
