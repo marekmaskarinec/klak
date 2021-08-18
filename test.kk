@@ -1,9 +1,6 @@
 
-:fib ( n -- n' )
-	if  dup 2 <  then  ret  fi
+10 mka len swap put put
 
-	dup  1 - fib
-	swap 2 - fib +
-;
+"hello" len swap put put
 
-10 fib put
+10 10 10 null cons cons cons len swap put put

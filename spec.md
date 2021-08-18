@@ -55,7 +55,7 @@ Pop n items from left of the stack.
 ## comments
 
 There are two types of comments. 
-Line comments: `/` and block comments, which are enclosed in `()`.
+Line comments: `?` and block comments, which are enclosed in `()`.
 Block comments are usually only used in word definitions.
 
 ## data types
@@ -107,7 +107,7 @@ Assignement is done by writing `.` before the variable name.
 It pops and assigns the last value.
 
 ```
-:a 3 .a ; a will now hold 3
+$a 3 .a ? a will now hold 3
 ```
 
 ## scopes

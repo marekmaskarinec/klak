@@ -98,24 +98,24 @@
 - [x] - rot  # rotates front 3 items
 - [x] - tuck # duplicate the top item below the second slot
 - [x] - over # duplicate the second item to the front 
-
+- [x] - nip
 
 ## arrays
 
 - [x] - mka  # make array with size of front value
 - [x] - get  # get nth element of an array ( array, index -- array, values-at-index )
 - [x] - set  # set nth element of an array ( array, index, value -- array )
-- [ ] - len  # get length
+- [x] - len  # get length
 - [ ] - atol # converts an array to a list
 - [ ] - find # returns a list of indexes, where value can be found ( array, value -- list-of-indexes )
-
+- [ ] - stoa
+- [ ] - atos
 
 ## strings
 
 - [ ] - gnth, snth and len are usable with strings
 - [ ] - contains # returns t if string contains a substring
 - [ ] - split    # splits a string into an array of strings ( string separator -- result )
-
 
 ## cons
 
@@ -124,7 +124,8 @@
 - [x] - car    # ( cons -- cons car )
 - [x] - cdr    # ( cons -- cons cdr )
 - [x] - uncons # ( cons -- car cdr )
-
+- [ ] - stol
+- [ ] - ltos
 
 ## tables
 

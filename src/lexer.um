@@ -144,7 +144,7 @@ fn (l: ^Lexer) next(): Token {
 			tok.v = slice(val, 5, len(val)-1)
 		}
 
-	case '/':
+	case '?':
 		l.get_before('\n')
 		return l.next()
 	case '(':

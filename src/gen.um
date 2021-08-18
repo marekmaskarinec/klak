@@ -79,7 +79,9 @@ fn (g: ^Gen) word_decl(name: str) {
 }
 
 fn (g: ^Gen) constant(name: str) {
-	g.push_simple("NULL", "kk_const", "front", 0)
+	if name == "null" {
+		g.buf.write_str(g.indent + "kk_list_push_front(&the_stack, (kk_cell){}, 0);\n")
+	}
 }
 
 fn (g: ^Gen) call_builtin(name: str) {

@@ -744,64 +744,115 @@ void kk_BUILTIN_put(void) {
 	kk_gcobj_dec(&cell);
 }
 
-void USER_WORD_fib() {
-	kk_line = 2 ;
-	kk_BUILTIN_dup();
+void kk_BUILTIN_len(void) {
+	int res;
 
-	kk_line = 2 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+	switch (kk_cell_abstype(the_stack->cell)) {
+	case kk_type_string:
+		res = strlen((char *)GCOBJ(the_stack->cell)->data);
+		break;
+	case kk_type_array:
+		res = ((kk_array *)GCOBJ(the_stack->cell)->data)->len;
+		break;
+	case kk_type_cons:
+		res = 0;
 
-	kk_line = 2 ;
-	kk_BUILTIN___SMALLER__();
+		
+		for (
+			kk_cons *node = CONS(GCOBJ(the_stack->cell));;
+			node = CONS(GCOBJ(node->cdr))) {
+				res++;
 
-	kk_line = 2 ;
-	tmp_cell = kk_list_popget(&the_stack);
-	tmp_res = kk_is_true(tmp_cell);
-	kk_gcobj_dec(&tmp_cell);
-	if (tmp_res) {
-		kk_line = 2 ;
-		return;
-	kk_line = 2 ;
+				if (node->cdr.type == kk_type_null)
+					break;
+
+				if (kk_cell_abstype(node->cdr) != kk_type_cons)
+					kk_runtime_error("Cannot get length of non list cons.");
+			}
+
+		break;
+	default:
+		kk_runtime_error("Cannot get length of %s.", type_strs[the_stack->cell.type]);
 	}
 
-	kk_line = 2 ;
-	kk_BUILTIN_dup();
-
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
-	kk_line = 4 ;
-	kk_BUILTIN___MINUS__();
-
-	kk_line = 4 ;
-	USER_WORD_fib();
-
-	kk_line = 4 ;
-	kk_BUILTIN_swap();
-
-	kk_line = 5 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
-
-	kk_line = 5 ;
-	kk_BUILTIN___MINUS__();
-
-	kk_line = 5 ;
-	USER_WORD_fib();
-
-	kk_line = 5 ;
-	kk_BUILTIN___PLUS__();
-
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = res }, 0);
 }
 
 
 int main() {
-	kk_line = 6 ;
+	kk_line = 0 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
 
-	kk_line = 8 ;
-	USER_WORD_fib();
+	kk_line = 1 ;
+	kk_BUILTIN_mka();
 
-	kk_line = 8 ;
+	kk_line = 1 ;
+	kk_BUILTIN_len();
+
+	kk_line = 1 ;
+	kk_BUILTIN_swap();
+
+	kk_line = 1 ;
+	kk_BUILTIN_put();
+
+	kk_line = 1 ;
+	kk_BUILTIN_put();
+
+	kk_line = 1 ;
+	{
+		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
+		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
+		tmp->type = kk_type_string; tmp->refs = 0;
+		tmp->data = malloc(6 );
+		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
+		((char *)tmp->data)[5 ] = 0;
+		strcpy(tmp->data, "hello");
+		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
+	}
+
+	kk_line = 3 ;
+	kk_BUILTIN_len();
+
+	kk_line = 3 ;
+	kk_BUILTIN_swap();
+
+	kk_line = 3 ;
+	kk_BUILTIN_put();
+
+	kk_line = 3 ;
+	kk_BUILTIN_put();
+
+	kk_line = 3 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
+
+	kk_line = 5 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
+
+	kk_line = 5 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
+
+	kk_line = 5 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_null }, 0 );
+
+	kk_line = 5 ;
+	kk_BUILTIN_cons();
+
+	kk_line = 5 ;
+	kk_BUILTIN_cons();
+
+	kk_line = 5 ;
+	kk_BUILTIN_cons();
+
+	kk_line = 5 ;
+	kk_BUILTIN_len();
+
+	kk_line = 5 ;
+	kk_BUILTIN_swap();
+
+	kk_line = 5 ;
+	kk_BUILTIN_put();
+
+	kk_line = 5 ;
 	kk_BUILTIN_put();
 
 
