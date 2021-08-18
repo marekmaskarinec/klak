@@ -33,6 +33,7 @@ const (
 	tok_lambda_open*
 	tok_lambda_close*
 	tok_file*
+	tok_mkw*
 )
 
 type Token* = struct {
@@ -143,7 +144,7 @@ fn (l: ^Lexer) next(): Token {
 			tok.v = slice(val, 5, len(val)-1)
 		}
 
-	case ';':
+	case '/':
 		l.get_before('\n')
 		return l.next()
 	case '(':
@@ -176,45 +177,24 @@ fn (l: ^Lexer) next(): Token {
 			tok.v = fix_ident(slice(tok.v, 1, len(tok.v)))
 			tok.t = tok_var_assign
 		}
-	case ':':
+	case '$':
 		tok.v = l.get_before(' ')
 		if len(tok.v) > 1 {
 			tok.v = fix_ident(slice(tok.v, 1, len(tok.v)))
 			tok.t = tok_var_decl
 		}
-	case '<':
-		tok.v = l.get_before(' ')
-		if len(tok.v) == 1 {
-			tok.t = tok_word
-			tok.v = fix_ident(tok.v)
-		} else {
-			tok.t = tok_push_front
-		}
-	case '>':
-		tok.v = l.get_before(' ')
-		if len(tok.v) == 1 {
-			tok.t = tok_word
-			tok.v = fix_ident(tok.v)
-		} else {
-			tok.t = tok_push_back
-		}
-	case '^':
-		tok.v = l.get_before(' ')
-		if len(tok.v) == 2 {
-			tok.t = tok_propagate
-		}
+	case ':':
+		l.next_char()
+		tok.t = tok_mkw
 	case '\0':
 		tok.t = tok_eof
-	case '{':
-		tok.v = l.get_before(' ')
-		tok.t = tok_lambda_open
-	case '}':
+	case ';':
 		tok.v = l.get_before(' ')
 		tok.t = tok_lambda_close
 	default:
 		tok.v = l.get_before(' ')
 
-		if is_number(tok.v[0]) || tok.v[0] == '-' {
+		if is_number(tok.v[0]) || (tok.v[0] == '-' && tok.v[0] != "-") {
 			whole_num := true
 			for i, c in tok.v {
 				if i == 0 && c == '-' {
@@ -257,7 +237,7 @@ fn (l: ^Lexer) next(): Token {
 				tok.t = tok2.t
 				tok.num_mod = std.atoi(num)
 			}
-		} else if tok.v == "t" || tok.v == "n" {
+		} else if tok.v == "null" {
 			tok.t = tok_constant
 		} else if is_kw(tok.v) {
 			tok.t = tok_keyword
@@ -284,6 +264,6 @@ fn (l: ^Lexer) peek(): Token {
 }
 
 fn (t: ^Token) print() {
-	types := []str{"null", "char", "word-repr-char", "num-repr-char", "string", "var assignement", "word", "push-front", "push-back", "propagate", "constant", "keyword", "int", "hex-int", "float", "eof", "var-declaration", "pop", "lopen", "lclose", "file mark"}
+	types := []str{"null", "char", "word-repr-char", "num-repr-char", "string", "var assignement", "word", "push-front", "push-back", "propagate", "constant", "keyword", "int", "hex-int", "float", "eof", "var-declaration", "pop", "lopen", "lclose", "file mark", "word declaration"}
 	printf("Token: { type: %s, value: \"%s\", pos: (%d, %d), mod: %d }\n", types[t.t], t.v, t.lineno, t.charno, t.num_mod)
 }

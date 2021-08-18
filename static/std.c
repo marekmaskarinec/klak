@@ -744,52 +744,65 @@ void kk_BUILTIN_put(void) {
 	kk_gcobj_dec(&cell);
 }
 
+void USER_WORD_fib() {
+	kk_line = 2 ;
+	kk_BUILTIN_dup();
+
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+
+	kk_line = 2 ;
+	kk_BUILTIN___SMALLER__();
+
+	kk_line = 2 ;
+	tmp_cell = kk_list_popget(&the_stack);
+	tmp_res = kk_is_true(tmp_cell);
+	kk_gcobj_dec(&tmp_cell);
+	if (tmp_res) {
+		kk_line = 2 ;
+		return;
+	kk_line = 2 ;
+	}
+
+	kk_line = 2 ;
+	kk_BUILTIN_dup();
+
+	kk_line = 4 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_line = 4 ;
+	kk_BUILTIN___MINUS__();
+
+	kk_line = 4 ;
+	USER_WORD_fib();
+
+	kk_line = 4 ;
+	kk_BUILTIN_swap();
+
+	kk_line = 5 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
+
+	kk_line = 5 ;
+	kk_BUILTIN___MINUS__();
+
+	kk_line = 5 ;
+	USER_WORD_fib();
+
+	kk_line = 5 ;
+	kk_BUILTIN___PLUS__();
+
+}
+
+
 int main() {
-	kk_line = 0 ;
+	kk_line = 6 ;
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
 
-	kk_line = 0 ;
-	kk_BUILTIN_mka();
+	kk_line = 8 ;
+	USER_WORD_fib();
 
-	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 12 }, 0 );
+	kk_line = 8 ;
+	kk_BUILTIN_put();
 
-	kk_line = 2 ;
-
-	kk_line = 2 ;
-	{
-		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
-		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
-		tmp->type = kk_type_string; tmp->refs = 0;
-		tmp->data = malloc(7 );
-		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
-		((char *)tmp->data)[6 ] = 0;
-		strcpy(tmp->data, "string");
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
-	}
-
-	kk_line = 4 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10.200000 }, 0 );
-
-	kk_line = 4 ;
-	kk_BUILTIN_cons();
-
-	kk_line = 4 ;
-
-	kk_line = 4 ;
-	{
-		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
-		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
-		tmp->type = kk_type_string; tmp->refs = 0;
-		tmp->data = malloc(8 );
-		if (!tmp->data) kk_runtime_error("Could not allocate a string.");
-		((char *)tmp->data)[7 ] = 0;
-		strcpy(tmp->data, "string2");
-		kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);
-	}
-
-	kk_line = 6 ;
-
-	kk_BUILTIN_s__BIGGER__();
 
 }

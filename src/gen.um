@@ -79,11 +79,7 @@ fn (g: ^Gen) word_decl(name: str) {
 }
 
 fn (g: ^Gen) constant(name: str) {
-	if name == "t" {
-		g.push_simple("!NULL", "kk_const", "front", 0)
-	} else {
-		g.push_simple("NULL", "kk_const", "front", 0)
-	}
+	g.push_simple("NULL", "kk_const", "front", 0)
 }
 
 fn (g: ^Gen) call_builtin(name: str) {

@@ -52,29 +52,10 @@ Example:
 
 Pop n items from left of the stack.
 
-### (n)\<word/literal (WIP)
-
-Push value of the word to (nth place from) the left of the stack.
-It is implicitly added.
-
-```
-5 2 1
-```
-
-Is same as
-
-```
-<5 <2 <1
-```
-
-### (n)>word/literal (WIP)
-
-Same as <, but to the right.
-
 ## comments
 
 There are two types of comments. 
-Line comments: `;` and block comments, which are enclosed in `()`.
+Line comments: `/` and block comments, which are enclosed in `()`.
 Block comments are usually only used in word definitions.
 
 ## data types
@@ -113,11 +94,11 @@ They are passed by reference.
 
 ## declaration
 
-Declaration is done by typing `:` before the variable name.
+Declaration is done by typing `$` before the variable name.
 No value is assigned, but the variable is initialized with null.
 
 ```
-:a
+$a
 ```
 
 ## assignement
@@ -143,10 +124,10 @@ The code between `if` and `then` is evaluated on test and if the top of the stac
 
 Example:
 ```
-if  5 4 gt  then
-	"bigger#newline" n format
+if  5 4 >  then
+	"bigger" put
 else
-	"smaller#newline" n format
+	"smaller" put
 fi
 ```
 
@@ -155,12 +136,12 @@ fi
 Loop evaluates everyting before `then` and if the stack-front is not 0, it executes the block.
 
 ```
-0 .i
-loop  10 i lt  then
-	i "~a " 0 format
+$i 0 .i
+loop  10 i >  then
+	i put
 	i 1 + .i
 pool
-"#newline" 0 format
+#newline put
 ```
 Will print numbers from 0 to 9.
 
@@ -200,14 +181,11 @@ reti
 
 ### functions
 
-Functions are declared with the `mkw` (make word) keyword. It takes a name.
-Function can't be used before declaration.
+Words are declared the same way like in forth.
 
 Example:
 ```
-mkw square {
-	dup *
-}
+:square ( n -- n' ) dup * ;
 ```
 
 Recursion is allowed.

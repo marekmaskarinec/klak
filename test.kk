@@ -1,9 +1,9 @@
 
-@inc "std.kh"
+:fib ( n -- n' )
+	if  dup 2 <  then  ret  fi
 
-12
+	dup  1 - fib
+	swap 2 - fib +
+;
 
-12 nip
- 
-23
-
+10 fib put
