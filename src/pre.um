@@ -158,6 +158,9 @@ fn (p: ^Preproc) do(): str {
 				p.lines[p.lno] = ""
 			} else if cmd == "@inc" {
 				p.inc()
+			} else if cmd == "@err" {
+				p.err(p.lines[p.lno])
+				p.lines[p.lno] = ""
 			}
 		} else {
 			split := strings.split(p.lines[p.lno], " ")

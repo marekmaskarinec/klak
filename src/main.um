@@ -22,7 +22,9 @@ fn main() {
 
 	inp = pp.do()
 
-	printf("%s\n", inp)
+	if pp.had_error {
+		return
+	}
 
 	g := gen.Gen{[]str{}, strings.mk_builder(), strings.mk_builder(), "\t", false, 0}
 	l := lexer.Lexer{inp, 0, 1, 0}

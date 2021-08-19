@@ -192,10 +192,10 @@ Recursion is allowed.
 
 #### prototypes
 
-Prototypes are done by leaving out the body.
+Prototypes are done by putting the `;` right after the word.
 
 ```
-mkw foo
+:square ;
 ```
 
 ## preprocessor
@@ -247,6 +247,24 @@ Includes a file.
 @inc "std.kh"
 ```
 
+### @err
+
+Prints an error and exits.
+Good for debugging.
+
+```
+@def PASS
+
+@idf PASS
+@err PASS shouldn't be defined
+@fid
+```
+
+Will print:
+```
+error: @err PASS shouldn't be defined (4, 0)
+```
+
 ## standard words
 
 ## arithmetics
@@ -267,7 +285,7 @@ Includes a file.
 <   smaller
 <=  smaller or equal
 >=  bigger or equal
-!=  not equal
+/=  not equal
 ```
 
 ## IO
