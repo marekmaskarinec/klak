@@ -9,6 +9,7 @@ import (
 
 type Preproc* = struct {
 	lno: int
+	ulno: int
 	lines: []str
 	defs: map.Map
 
@@ -16,6 +17,7 @@ type Preproc* = struct {
 	had_error: bool
 
 	dir: str
+	file: str
 }
 
 fn (p: ^Preproc) err(msg: str) {
@@ -52,13 +54,12 @@ fn (p: ^Preproc) udf() {
 }
 
 fn (p: ^Preproc) eat() {
+	p.lines[p.lno] = ""
 	for p.lno < len(p.lines) && !p.had_error {
-		if len(p.lines[p.lno]) == 0 {
-			p.lno++
-			continue
-		}
+		p.ulno++
+		p.lno++
 
-		if p.lines[p.lno][0] == '@' {
+		if len(p.lines[p.lno]) != 0 && p.lines[p.lno][0] == '@' {
 			cmd := strings.split(p.lines[p.lno], " ")[0]
 			
 			if cmd == "@ifd" || cmd == "@ind" {
@@ -93,6 +94,8 @@ fn (p: ^Preproc) ind() {
 
 	if ^str(p.defs.get(split[1])) != null {
 		p.eat()
+	} else {
+		p.lines[p.lno] = ""
 	}
 }
 
@@ -116,11 +119,15 @@ fn (p: ^Preproc) inc() {
 
 	p.lines[p.lno] = "@_setdir " + p.dir
 
+	flines = append([]str{"@file " + path, "@line 0"}, flines)
+
 	flines = append(
 		flines,
-		[]str{"@line" + std.itoa(p.lno)}) // todo file names
+		[]str{"@file " + p.file, "@line " + std.itoa(p.ulno - 1) })
 
 	p.dir, path = filepath.split(p.dir + path)
+
+	p.file = path
 
 	rest := slice(p.lines, p.lno, len(p.lines))
 	p.lines = append(
@@ -130,6 +137,8 @@ fn (p: ^Preproc) inc() {
 }
 
 fn (p: ^Preproc) do(): str {
+	p.lines = append([]str{"@file " + p.file}, p.lines)
+
 	for p.lno < len(p.lines) {
 		if len(p.lines[p.lno]) == 0 {
 			p.lno++
@@ -150,12 +159,15 @@ fn (p: ^Preproc) do(): str {
 				p.lines[p.lno] = ""
 			} else if cmd == "@ind" {
 				p.ind()
-				p.lines[p.lno] = ""
 			} else if cmd == "@fid" {
 				p.lines[p.lno] = ""
 			} else if cmd == "@_setdir" {
 				p.dir = strings.split(p.lines[p.lno], " ")[1]
 				p.lines[p.lno] = ""
+			} else if cmd == "@line" {
+				p.ulno = std.atoi(strings.split(p.lines[p.lno], " ")[1])
+			} else if cmd == "@file" {
+				p.file = strings.split(p.lines[p.lno], " ")[1]
 			} else if cmd == "@inc" {
 				p.inc()
 			} else if cmd == "@err" {
@@ -174,6 +186,7 @@ fn (p: ^Preproc) do(): str {
 		}
 
 		p.lno++
+		p.ulno++
 	}
 
 	return strings.join(p.lines, "\n")

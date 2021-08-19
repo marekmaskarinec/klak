@@ -129,19 +129,21 @@ fn (l: ^Lexer) next(): Token {
 	tok := Token{ "", tok_null, l.lineno, l.charno, 1 }
 	switch l.peek_char() {
 	case '@':
-		val := l.get_before(' ')
+		val := l.get_before('\n')
+
+		split := strings.split(val, " ")
 
 		if len(val) < 5 {
 			tok.v = val
 			return tok
 		}
 
-		if slice(val, 0, 5) == "@line" {
-			l.lineno = std.atoi(slice(val, 5, len(val)))
+		if split[0] == "@line" {
+			l.lineno = std.atoi(split[1])
 			return l.next()
-		} else if slice(val, 0, 5) == "@file" {
+		} else if split[0] == "@file" {
 			tok.t = tok_file
-			tok.v = slice(val, 5, len(val)-1)
+			tok.v = split[1]
 		}
 
 	case '?':

@@ -67,13 +67,13 @@ kk_cell tmp_cell = {0};
 kk_bool tmp_res = 0;
 
 int kk_line = 0;
-char *kk_file = NULL;
+char kk_file[2048] = {0};
 const char *type_strs[] = {
 	"null", "float", "gc object", "char", "string", "cons", "array"
 };
 
 void kk_runtime_error(char *msg, ...) {
-	fprintf(stderr, "\x1b[1m(%d): \x1b[31mruntime error: \x1b[0m", kk_line);
+	fprintf(stderr, "\x1b[1m(%s: %d): \x1b[31mruntime error: \x1b[0m", kk_file, kk_line);
 
 	va_list args;
 	va_start(args, msg);
