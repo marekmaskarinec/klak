@@ -824,22 +824,77 @@ void kk_BUILTIN_char(void) {
 	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_char, .char_val = res }, 0);
 }
 
+void kk_BUILTIN_stoa(void) {
+	int len = 0;
+
+	for (kk_node *node = the_stack;
+	     node && node->cell.type;
+	     node = node->next)
+		len++;
+
+	kk_array *arr = malloc(sizeof(kk_array));
+	arr->len = len;
+	arr->data = malloc(sizeof(kk_cell) * len);
+
+	for (int i=0; i < len; i++)
+		arr->data[i] = kk_list_popget(&the_stack);
+
+	kk_list_popn(&the_stack, 1);
+
+	kk_gcobj *o = malloc(sizeof(kk_gcobj));
+	o->type = kk_type_array;
+	o->refs = 0;
+	o->data = arr;
+
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_gcobj, .ptr_val = o }, 0);
+}
+
+void kk_BUILTIN_atos(void) {
+	kk_cell cell = kk_list_popget(&the_stack);
+	if (kk_cell_abstype(cell) != kk_type_array)
+		kk_runtime_error("Cannot atos a %s.", type_strs[kk_cell_abstype(cell)]);
+
+	kk_array *arr = (kk_array *)GCOBJ(cell)->data;
+	for (int i=arr->len-1; i >= 0; i--) {
+		kk_list_push_front(&the_stack, arr->data[i], 0);
+		kk_gcobj_dec(&the_stack->cell);
+	}
+
+	kk_gcobj_dec(&cell);
+}
 
 int main() {
 	kk_line = 0 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 67 }, 0 );
+	strcpy(kk_file, "test.kk");
+	kk_line = 0 ;
+	kk_list_push_front(&the_stack, (kk_cell){}, 0);
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 10 }, 0 );
 
-	kk_line = 1 ;
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 20 }, 0 );
+
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 30 }, 0 );
+
+	kk_line = 2 ;
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 40 }, 0 );
+
+	kk_line = 2 ;
+	kk_BUILTIN_stoa();
+
+	kk_BUILTIN_s__BIGGER__();
+	kk_line = 2 ;
 	kk_BUILTIN_dup();
 
-	kk_line = 1 ;
+	kk_line = 2 ;
 	kk_BUILTIN_put();
 
-	kk_line = 1 ;
-	kk_BUILTIN_char();
+	kk_line = 2 ;
+	kk_BUILTIN_atos();
 
-	kk_line = 1 ;
-	kk_BUILTIN_put();
+	kk_line = 2 ;
+	kk_BUILTIN_s__BIGGER__();
 
 
 }

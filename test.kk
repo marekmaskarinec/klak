@@ -1,6 +1,2 @@
 
-@inc "std.kh"
-@inc "std.kh"
-
-67 dup put char put
-nip
+null 10 20 30 40 stoa dup put atos s>

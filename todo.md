@@ -40,15 +40,15 @@
 - [x] - cons
 - [ ] - hashmaps
 - [x] - arrays
-- [ ] - preprocessor
+- [x] - preprocessor
 	- [x] - def, udf
 	- [x] - idf, ind
 	- [x] - macro expansion
-	- [ ] - include
+	- [x] - include
 		- [x] - insert content
 		- [x] - proper paths
 		- [x] - line numbers
-		- [ ] - file names
+		- [x] - file names
 
 # standard functions
 
@@ -108,13 +108,12 @@
 - [x] - len  # get length
 - [ ] - atol # converts an array to a list
 - [ ] - find # returns a list of indexes, where value can be found ( array, value -- list-of-indexes )
-- [ ] - stoa
-- [ ] - atos
+- [x] - stoa
+- [x] - atos
 
 ## strings
 
-- [ ] - gnth, snth and len are usable with strings
-- [ ] - contains # returns t if string contains a substring
+- [ ] - contains # returns 1 if string contains a substring
 - [ ] - split    # splits a string into an array of strings ( string separator -- result )
 
 ## cons
