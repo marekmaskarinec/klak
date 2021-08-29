@@ -886,64 +886,53 @@ void kk_BUILTIN_abs(void) {
 		the_stack->cell.float_val *= -1;
 }
 
-void USER_WORD_fib() {
-	kk_line = 3 ;
-	kk_BUILTIN_dup();
-
-	kk_line = 3 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
-
-	kk_line = 3 ;
-	kk_BUILTIN___SMALLER__();
-
-	kk_line = 3 ;
-	tmp_cell = kk_list_popget(&the_stack);
-	tmp_res = kk_is_true(tmp_cell);
-	kk_gcobj_dec(&tmp_cell);
-	if (tmp_res) {
-		kk_line = 3 ;
-		return;
-	kk_line = 4 ;
-	}
-
-	kk_line = 5 ;
-	kk_BUILTIN_dup();
-
-	kk_line = 7 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
-
-	kk_line = 7 ;
-	kk_BUILTIN___MINUS__();
-
-	kk_line = 7 ;
-	USER_WORD_fib();
-
-	kk_line = 7 ;
-	kk_BUILTIN_swap();
-
-	kk_line = 8 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 2 }, 0 );
-
-	kk_line = 8 ;
-	kk_BUILTIN___MINUS__();
-
-	kk_line = 8 ;
-	USER_WORD_fib();
-
-	kk_line = 8 ;
-	kk_BUILTIN___PLUS__();
-
-}
-
-
 int main() {
-	kk_line = 0 ;
 	strcpy(kk_file, "test.kk");
+	kk_line = 8 ;
+	kk_cell USER_VAR_ptr = {0};
+
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 0 }, 0 );
+
+	kk_cell_copy(&USER_VAR_ptr, &the_stack->cell);
+	kk_gcobj_dec(&the_stack->cell);
+	kk_list_popn(&the_stack, 1 );
+
 	kk_line = 9 ;
-	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 24 }, 0 );
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 30000 }, 0 );
+
+	kk_BUILTIN_mka();
 
 	kk_line = 11 ;
-	USER_WORD_fib();
+	kk_BUILTIN_get();
 
+	kk_list_push_front(&the_stack, USER_VAR_ptr, 0);
+
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_BUILTIN___PLUS__();
+
+	kk_list_push_front(&the_stack, USER_VAR_ptr, 0);
+
+	kk_BUILTIN_swap();
+
+	kk_BUILTIN_set();
+
+	kk_BUILTIN_get();
+
+	kk_list_push_front(&the_stack, USER_VAR_ptr, 0);
+
+	kk_list_push_front(&the_stack, (kk_cell){ .type = kk_type_float, .float_val = 1 }, 0 );
+
+	kk_BUILTIN___PLUS__();
+
+	kk_list_push_front(&the_stack, USER_VAR_ptr, 0);
+
+	kk_BUILTIN_swap();
+
+	kk_BUILTIN_set();
+
+	kk_BUILTIN_put();
+
+	kk_line = 12 ;
 
 }

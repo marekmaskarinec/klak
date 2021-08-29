@@ -11,8 +11,43 @@ import (
 	"../lib/libs/strings.um"
 )
 
+fn help() {
+	printf("%s\n",
+		"klak - a stack oriented language\n" +
+		"by Marek Maskarinec\n" +
+		"usage:\n" +
+		"\t-E - only print preprocessor output\n" +
+		"\t-h - show this help\n")
+}
+
 fn main() {
-	f := std.fopen("test.kk", "r")
+	file := ""
+	preproc_only := false
+	argc := std.argc()
+	for i:=1; i < argc; i++ {
+		arg := std.argv(i)
+		if arg == "-E" {
+			preproc_only = true
+		} else if arg == "-h" {
+			help()
+			return
+		} else {
+			if file != "" {
+				printf("Incorrect usage\n")
+				help()
+				return
+			}
+
+			file = arg
+		}
+	}
+
+	if file == "" {
+		help()
+		return
+	}
+
+	f := std.fopen(file, "r")
 	inp := common.readall(f)
 	std.fclose(f)
 
@@ -28,7 +63,10 @@ fn main() {
 
 	inp = "\n" + inp
 
-	printf("%s\n", inp)
+	if preproc_only {
+		printf("%s\n", inp)
+		return
+	}
 
 	g := gen.Gen{[]str{}, strings.mk_builder(), strings.mk_builder(), "\t", false}
 	l := lexer.Lexer{inp, 0, 0, 0}

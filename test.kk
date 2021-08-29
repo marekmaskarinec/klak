@@ -1,11 +1,11 @@
 
-:fib
-	if  dup 2 <  then
-		ret
-	fi
+@def right ptr 1 + .ptr
+@def left ptr 1 - .ptr
+@def inc get ptr 1 +  ptr swap set
+@def dec get ptr 1 -  ptr swap set
+@def print get ptr put
 
-	dup 1 - fib
-	swap 2 - fib
-	+ ;
+$ptr 0 .ptr
+30000 mka
 
-38 fib
+inc inc put
