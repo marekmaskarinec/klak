@@ -10,8 +10,6 @@ type Gen* = struct {
 	main_fn: strings.builder
 	indent: str
 	in_block: bool
-
-	lno: int
 }
 
 const (
@@ -22,12 +20,14 @@ const (
 
 fn (g: ^Gen) write(value: str) {
 	if g.in_block {
-		g.buf.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
 		g.buf.write_str(value)
 	} else {
-		g.main_fn.write_str(g.indent + "kk_line = " + repr(g.lno) + ";\n")
 		g.main_fn.write_str(value)
 	}
+}
+
+fn (g: ^Gen) lno(lno: int) {
+	g.write(g.indent + "kk_line = " + repr(lno) + ";\n")
 }
 
 fn (g: ^Gen) lower_indent() {

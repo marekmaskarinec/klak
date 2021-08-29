@@ -1,12 +1,11 @@
 
-$i 2 .i
+:fib
+	if  dup 2 <  then
+		ret
+	fi
 
-0 1
+	dup 1 - fib
+	swap 2 - fib
+	+ ;
 
-loop  i 10 <  then
-	tuck +
-
-	i 1 + .i
-pool
-
-i put
+38 fib

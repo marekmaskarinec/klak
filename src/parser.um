@@ -359,16 +359,17 @@ fn (p: ^Parser) parse_word(word: str) {
 
 fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool {
 	tok := p.l.next()	
-	//tok.print()
 
-	p.g.lno = p.lno
-
-	if tok.t == stop && stop_str == tok.v {
-		return false
+	if p.lno != tok.lineno {
+		p.g.lno(tok.lineno)
 	}
 
 	p.lno = tok.lineno
 	p.cno = tok.charno
+
+	if tok.t == stop && stop_str == tok.v {
+		return false
+	}
 
 	switch tok.t {
 	case lexer.tok_literal_char:

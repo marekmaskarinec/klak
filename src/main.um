@@ -30,7 +30,7 @@ fn main() {
 
 	printf("%s\n", inp)
 
-	g := gen.Gen{[]str{}, strings.mk_builder(), strings.mk_builder(), "\t", false, 0}
+	g := gen.Gen{[]str{}, strings.mk_builder(), strings.mk_builder(), "\t", false}
 	l := lexer.Lexer{inp, 0, 0, 0}
 	p := parser.Parser{l, g, common.errorf,
 		 0, 0, false,
