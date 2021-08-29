@@ -356,6 +356,8 @@ void kk_BUILTIN___PLUS__(void) {
 		break;
 	
 	case kk_type_float:
+		if (!the_stack)
+			kk_runtime_error("The stack is empty.");
 		if (the_stack->cell.type != kk_type_float)
 			kk_runtime_error("Cannot add float to %s.", type_strs[b.type]);
 
@@ -370,6 +372,8 @@ void kk_BUILTIN___PLUS__(void) {
 
 void kk_BUILTIN___MINUS__(void) {
 	kk_cell a = kk_list_popget(&the_stack);
+	if (!the_stack)
+		kk_runtime_error("The stack is empty.");
 
 	if (a.type == kk_type_float && the_stack->cell.type == kk_type_float) {
 		the_stack->cell.float_val -= a.float_val;
@@ -382,6 +386,8 @@ void kk_BUILTIN___MINUS__(void) {
 
 void kk_BUILTIN___MUL__(void) {
 	kk_cell a = kk_list_popget(&the_stack);
+	if (!the_stack)
+		kk_runtime_error("The stack is empty.");
 
 	if (a.type == the_stack->cell.type && a.type == kk_type_float) {
 		the_stack->cell.float_val *= a.float_val;
@@ -394,6 +400,8 @@ void kk_BUILTIN___MUL__(void) {
 
 void kk_BUILTIN___DIV__(void) {
 	kk_cell a = kk_list_popget(&the_stack);
+	if (!the_stack)
+		kk_runtime_error("The stack is empty.");
 
 	if (a.type == the_stack->cell.type && a.type == kk_type_float) {
 		if (a.float_val == 0)
@@ -409,6 +417,8 @@ void kk_BUILTIN___DIV__(void) {
 
 void kk_BUILTIN___MOD__(void) {
 	kk_cell a = kk_list_popget(&the_stack);
+	if (!the_stack)
+		kk_runtime_error("The stack is empty.");
 
 	if (a.type == the_stack->cell.type && a.type == kk_type_float) {
 		if (a.float_val == 0)
