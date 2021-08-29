@@ -70,7 +70,7 @@ They are 64-bit (`double` in c).
 
 ### arrays
 
-Arrays are of fixed length (which can be determined at runtime).
+Array can be resized at runtime by reallocating, but that is slow.
 They are passed by reference.
 
 ### strings
@@ -92,9 +92,9 @@ They are passed by reference.
 Data, user doesn't know how works like c's `FILE`.
 They are passed by reference.
 
-## declaration
+## variable declaration
 
-Declaration is done by typing `$` before the variable name.
+Variable declaration is done by typing `$` before the variable name.
 No value is assigned, but the variable is initialized with null.
 
 ```
@@ -121,6 +121,7 @@ The stack is global.
 
 Similar to other languages.
 The code between `if` and `then` is evaluated on test and if the top of the stack is not 0, block is executed.
+Else is optional.
 
 Example:
 ```
@@ -150,6 +151,7 @@ Will print numbers from 0 to 9.
 Code after `case` is evaluated and the top of the stack is saved.
 Then code after `on` is evaluated and top is compared with the value saved before.
 If none of the ons pass, else is executed.
+Else is **not** optional.
 
 ```
 case  5  then
@@ -171,10 +173,10 @@ Optionally, you can provide second declaration.
 The first one is always index, the second one is value.
 
 ```
-:my-array
+$my-array
 10 mka .my-array
 
-iter :i :v my-array then
+iter $i $v my-array then
 	i v "~a: ~a" 1 format
 reti
 ```
@@ -193,6 +195,7 @@ Recursion is allowed.
 #### prototypes
 
 Prototypes are done by putting the `;` right after the word.
+A builtin way to create empty words isn't supported.
 
 ```
 :square ;
@@ -221,13 +224,13 @@ If a macro is defined, undefines it.
 @def HELLO
 
 @idf HELLO
-	; I get compiled
+	? I get compiled
 @fid
 
 @udf HELLO
 
 @idf HELLO
-	; I don't
+	? I don't
 @fid
 ```
 

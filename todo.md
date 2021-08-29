@@ -49,6 +49,13 @@
 		- [x] - proper paths
 		- [x] - line numbers
 		- [x] - file names
+- [ ] - proper cli frontend
+	- [ ] - preproc only flag
+	- [ ] - drop c file flag
+	- [ ] - build system
+		- [ ] - figure out dependencies
+		- [ ] - libtcc for automatic builds
+		- [ ] - auto deps system similar to aup?
 
 # standard functions
 
@@ -83,7 +90,7 @@
 
 ## functions
 
-- [ ] - abs   # absolute function
+- [x] - abs   # absolute function
 - [ ] - sin   # sine
 - [ ] - cos   # cosine
 - [ ] - tg    # tangens
@@ -123,6 +130,7 @@
 - [x] - car    # ( cons -- cons car )
 - [x] - cdr    # ( cons -- cons cdr )
 - [x] - uncons # ( cons -- car cdr )
+- [x] - l> ( value cons -- cons' )
 - [ ] - stol
 - [ ] - ltos
 

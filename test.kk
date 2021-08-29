@@ -1,2 +1,12 @@
 
-null 10 20 30 40 stoa dup put atos s>
+$i 2 .i
+
+0 1
+
+loop  i 10 <  then
+	tuck +
+
+	i 1 + .i
+pool
+
+i put
