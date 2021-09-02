@@ -171,6 +171,7 @@ fn (l: ^Lexer) next(): Token {
 		tok.v = l.get_before('"')
 		tok.t = tok_literal_string
 		l.next_char()
+		return tok
 	case '.':
 		tok.v = l.get_before(' ')
 		if len(tok.v) == 1 {

@@ -25,7 +25,7 @@ fn hash*(s: str): uint32 {  // djb2 hash
     return hash;
 }
 
-fn errorf*(msg: str, values: []interface{}, lineno, charno: int) {
+fn errorf*(msg: str, values: []interface{}, lineno, charno: int, file: str) {
     b := strings.mk_builder()
     split := strings.split(msg, "~a")
 
@@ -38,7 +38,7 @@ fn errorf*(msg: str, values: []interface{}, lineno, charno: int) {
     }
     b.write_str(split[len(split)-1])
 
-    printf("error: %s (%d, %d)\n", b.to_str(), lineno, charno)
+    printf("error: %s (%s: %d, %d)\n", b.to_str(), file, lineno, charno)
 }
 
 fn pow*(a, b: int): int {

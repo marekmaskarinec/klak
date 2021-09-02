@@ -39,35 +39,32 @@ fn (g: ^Gen) lower_indent() {
 }
 
 fn (g: ^Gen) push_simple(value: interface{}, type_str: str, side: str, offset: int) {
-	field := strings.trimprefix(type_str, "kk_type_") + "_val"
-	g.write(g.indent + "kk_list_push_" + side +
-		"(&the_stack, (kk_cell){ .type = " + type_str + ", ." +
-		field + " = " + repr(value) + "}, " + repr(offset) + ");\n\n")
+	g.write(g.indent + "PUSH(" + type_str + ", " + type_str + ", " + repr(value) + ");\n")
 }
 
 fn (g: ^Gen) push_string(value, side: str, offset: int) {
 	g.write(g.indent + "{\n"+
 		g.indent + "\t" + "kk_gcobj *tmp = malloc(sizeof(kk_gcobj));\n" +
 		g.indent + "\t" + "if (!tmp) kk_runtime_error(\"Could not allocate a gc object.\");\n" +
-		g.indent + "\t" + "tmp->type = kk_type_string; tmp->refs = 0; \n" +
-		g.indent + "\t" + "tmp->data = malloc(" + repr(len(value) + 1) + ");\n" +
-		g.indent + "\t" + "if (!tmp->data) kk_runtime_error(\"Could not allocate a string.\");\n" +
-		g.indent + "\t" + "((char *)tmp->data)[" + repr(len(value)) + "] = 0;\n" +
-		g.indent + "\t" + "strcpy(tmp->data, \"" + value + "\");\n" +
-		g.indent + "\t" + "kk_list_push_" + side + "(&the_stack, " +
-		"(kk_cell){ .type = kk_type_gcobj, .ptr_val = tmp }, 0);\n" +
+		g.indent + "\t" + "tmp->type = kk_type_string; tmp->refs = 1; \n" +
+		g.indent + "\t" + "tmp->ptr_val = malloc(" + repr(len(value) + 1) + ");\n" +
+		g.indent + "\t" + "if (!tmp->ptr_val) kk_runtime_error(\"Could not allocate a string.\");\n" +
+		g.indent + "\t" + "((char *)tmp->ptr_val)[" + repr(len(value)) + "] = 0;\n" +
+		g.indent + "\t" + "strcpy(tmp->ptr_val, \"" + value + "\");\n" +
+		g.indent + "\t" + "PUSH(gcobj, ptr, tmp);\n" +
 		g.indent + "}\n\n")
 }
 
 fn (g: ^Gen) pop(n: int) {
 	g.write(
-		g.indent + "kk_gcobj_dec(&the_stack->cell);\n" +
-		g.indent + "kk_list_popn(&the_stack, " + repr(n) + ");\n\n")
+		g.indent + "kk_gcobj_dec(stack);\n" +
+		g.indent + "POP();\n")
 }
 
 fn (g: ^Gen) assign(name: str) {
-	g.write(g.indent + "kk_cell_copy(&" + var_prefix + name + ", &the_stack->cell);\n")
-	g.pop(1)
+	g.write(
+		g.indent + "kk_gcobj_dec(&" + var_prefix + name + ");\n" +
+		g.indent + var_prefix + name + "= POP();\n")
 }
 
 fn (g: ^Gen) decl(name: str) {
@@ -80,7 +77,7 @@ fn (g: ^Gen) word_decl(name: str) {
 
 fn (g: ^Gen) constant(name: str) {
 	if name == "null" {
-		g.write(g.indent + "kk_list_push_front(&the_stack, (kk_cell){}, 0);\n")
+		g.write(g.indent + "PUSH(null, char, 0);\n")
 	}
 }
 
@@ -93,7 +90,8 @@ fn (g: ^Gen) call_user_word(name: str) {
 }
 
 fn (g: ^Gen) push_variable(name: str) {
-	g.write(g.indent + "kk_list_push_front(&the_stack, " + var_prefix + name + ", 0);\n\n")
+	g.write(g.indent + "*++stack = " + var_prefix + name + ";\n" +
+		g.indent + "kk_gcobj_inc(stack);\n")
 }
 
 fn (g: ^Gen) open() {
@@ -108,7 +106,7 @@ fn (g: ^Gen) close() {
 
 fn (g: ^Gen) if_cond() {
 	g.write(
-		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
+		g.indent + "tmp_cell = POP();\n" +
 		g.indent + "tmp_res = kk_is_true(tmp_cell);\n" +
 		g.indent + "kk_gcobj_dec(&tmp_cell);\n" +
 		g.indent + "if (tmp_res) {\n")
@@ -155,7 +153,7 @@ fn (g: ^Gen) loop_head() {
 
 fn (g: ^Gen) loop_cond() {
 	g.write(
-		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
+		g.indent + "tmp_cell = POP();\n" +
 		g.indent + "tmp_res = kk_is_true(tmp_cell);\n" +
 		g.indent + "kk_gcobj_dec(&tmp_cell);\n" +
 		g.indent + "if (!tmp_res) break;\n")
@@ -177,7 +175,7 @@ fn (g: ^Gen) case_footer(nest: int) {
 	g.lower_indent()
 	g.write(
 		g.indent + "}\n\n" +
-		g.indent + "kk_cell case_tmp_" + repr(nest + 1) + " = kk_list_popget(&the_stack);\n" +
+		g.indent + "kk_cell case_tmp_" + repr(nest + 1) + " = POP();\n" +
 		g.indent)
 }
 
@@ -185,9 +183,9 @@ fn (g: ^Gen) on(nest: int) {
 	g.lower_indent()
 	g.write(
 		g.indent + "}\n" +
-		g.indent + "kk_list_push_front(&the_stack, case_tmp_" + repr(nest) + ", 0);\n" +
+		g.indent + "*++stack = case_tmp_" + repr(nest) + ";\nkk_gcobj_inc(stack);\n" +
 		g.indent + "kk_BUILTIN___EQUAL__();\n" +
-		g.indent + "tmp_cell = kk_list_popget(&the_stack);\n" +
+		g.indent + "tmp_cell = POP();\n" +
 		g.indent + "tmp_res = kk_is_true(tmp_cell);\n" +
 		g.indent + "kk_gcobj_dec(&tmp_cell);\n" +
 		g.indent + "if (!tmp_res) {\n")

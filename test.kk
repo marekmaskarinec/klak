@@ -1,11 +1,11 @@
 
-@def right ptr 1 + .ptr
-@def left ptr 1 - .ptr
-@def inc get ptr 1 +  ptr swap set
-@def dec get ptr 1 -  ptr swap set
-@def print get ptr put
+:fib ( n -- n' )
+	if  dup 2 <  then
+		ret
+	fi
 
-$ptr 0 .ptr
-30000 mka
+	dup  1 - fib
+	swap 2 - fib
+	+ ;
 
-inc inc put
+fib 10 put

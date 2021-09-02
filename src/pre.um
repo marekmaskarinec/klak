@@ -13,7 +13,7 @@ type Preproc* = struct {
 	lines: []str
 	defs: map.Map
 
-	err_fn: fn(msg: str, values: []interface{}, lineno, charno: int)
+	err_fn: fn(msg: str, values: []interface{}, lineno, charno: int, file: str)
 	had_error: bool
 
 	dir: str
@@ -23,7 +23,7 @@ type Preproc* = struct {
 fn (p: ^Preproc) err(msg: str) {
 	p.had_error = true
 
-	p.err_fn(msg, []interface{}{}, p.lno, 0)
+	p.err_fn(msg, []interface{}{}, p.lno, 0, p.file)
 }
 
 fn (p: ^Preproc) def() {
