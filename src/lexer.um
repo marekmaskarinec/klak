@@ -44,8 +44,30 @@ type Token* = struct {
 	num_mod: int
 }
 
-fn is_number(c: char): bool {
+fn is_char_number(c: char): bool {
 	return (c >= '0' && c <= '9') || c == '.'
+}
+
+fn is_number(s: str): bool {
+	for i, c in s {
+		if i == 0 && c == '-' {
+			continue
+		}
+
+		if i == 1 && c == 'x' {
+			continue
+		}
+
+		if c == '.' && i == len(s) - 1 {
+			return false
+		}
+
+		if !is_char_number(c) {
+			return false
+		}
+	}
+
+	return true
 }
 
 fn is_kw(w: str): bool {
@@ -126,6 +148,7 @@ fn (l: ^Lexer) next(): Token {
 		c = l.next_char()
 	}
 
+	fix := true
 	tok := Token{ "", tok_null, l.lineno, l.charno, 1 }
 	switch l.peek_char() {
 	case '@':
@@ -171,7 +194,7 @@ fn (l: ^Lexer) next(): Token {
 		tok.v = l.get_before('"')
 		tok.t = tok_literal_string
 		l.next_char()
-		return tok
+		fix = false
 	case '.':
 		tok.v = l.get_before(' ')
 		if len(tok.v) == 1 {
@@ -197,49 +220,9 @@ fn (l: ^Lexer) next(): Token {
 	default:
 		tok.v = l.get_before(' ')
 
-		if is_number(tok.v[0]) || (tok.v[0] == '-' && tok.v[0] != "-") {
-			whole_num := true
-			for i, c in tok.v {
-				if i == 0 && c == '-' {
-					continue
-				}
-
-				if i == 1 && c == 'x' {
-					continue
-				}
-
-				if c == '.' && i == len(tok.v) - 1 {
-					whole_num = false
-					break;
-				}
-
-				if !is_number(c) {
-					whole_num = false
-					break
-				}
-			}
-
-			if whole_num {
-				tok.t = get_number_type(tok.v)
-				return tok
-			} else {
-				l.pos -= len(tok.v)
-				l.lineno = tok.lineno
-				l.charno = tok.charno
-        
-				num := ""
-				for i:=0; tok.v[i] != '.' && is_number(tok.v[i]); i++ {
-					l.pos++
-					l.charno++
-					num += str(tok.v[i])
-				}
-        
-				tok2 := l.next()
-        
-				tok.v = tok2.v
-				tok.t = tok2.t
-				tok.num_mod = std.atoi(num)
-			}
+		if is_number(tok.v) {
+			tok.t = get_number_type(tok.v)
+			fix = false
 		} else if tok.v == "null" {
 			tok.t = tok_constant
 		} else if is_kw(tok.v) {
@@ -249,7 +232,9 @@ fn (l: ^Lexer) next(): Token {
 		}
 	}
 
-	tok.v = fix_ident(tok.v)
+	if fix {
+		tok.v = fix_ident(tok.v)
+	}
 
 	return tok
 }
