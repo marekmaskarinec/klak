@@ -385,7 +385,6 @@ fn (p: ^Parser) parse_next(stop: int, stop_str: str): bool {
 		p.g.push_simple(char(p.hex_to_int(tok.v)), "char", "front", 0)
 	
 	case lexer.tok_int:
-		printf("%s\n", tok.v)
 		p.g.push_simple(std.atoi(tok.v), "float", "front", 0)
 
 	case lexer.tok_int_hex:

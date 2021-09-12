@@ -88,10 +88,25 @@ void kk_runtime_error(char *msg, ...) {
 	exit(1);
 }
 
-void kk_gcobj_inc(kk_cell *o) {
-	if (o->type == kk_type_gcobj) {
-		((kk_gcobj *)(o->ptr_val))->refs++;
+void kk_gcobj_inc(kk_cell *cell) {
+	if (cell->type != kk_type_gcobj)
+		return;
+
+	kk_gcobj *o = ((kk_gcobj *)cell->ptr_val);
+
+	switch (o->type) {
+	case kk_type_cons:
+		kk_gcobj_inc(&((kk_cons *)o->ptr_val)->car);
+		kk_gcobj_inc(&((kk_cons *)o->ptr_val)->cdr);
+		break;
+	case kk_type_array:;
+		kk_array *arr = (kk_array *)o->ptr_val;
+		for (int i=0; i < arr->len; i++)
+			kk_gcobj_inc(&arr->data[i]);
+		break;
 	}
+
+	o->refs++;
 }
 
 void kk_gcobj_free(kk_gcobj *o);
@@ -106,20 +121,12 @@ void kk_cell_free(kk_cell cell) {
 void kk_gcobj_dec(kk_cell *c);
 void kk_gcobj_free(kk_gcobj *o) {
 	switch (o->type) {
-	case kk_type_string:
-		free(o->ptr_val);
-		break;
-	case kk_type_cons:
-		kk_gcobj_dec(&CONS(o)->car);
-		kk_gcobj_dec(&CONS(o)->cdr);
-		free(o->ptr_val);
-		break;
 	case kk_type_array:
 		free(((kk_array *)o->ptr_val)->data);
-		free(o->ptr_val);
 		break;
 	}
 
+	free(o->ptr_val);
 	free(o);
 }
 
@@ -128,6 +135,18 @@ void kk_gcobj_dec(kk_cell *c) {
 		return;
 
 	kk_gcobj *o = ((kk_gcobj *)c->ptr_val);
+
+	switch (o->type) {
+	case kk_type_cons:
+		kk_gcobj_dec(&((kk_cons *)o->ptr_val)->car);
+		kk_gcobj_dec(&((kk_cons *)o->ptr_val)->cdr);
+		break;
+	case kk_type_array:;
+		kk_array *arr = (kk_array *)o->ptr_val;
+		for (int i=0; i < arr->len; i++)
+			kk_gcobj_dec(&arr->data[i]);
+		break;
+	}
 
 	o->refs--;
 
