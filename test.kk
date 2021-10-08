@@ -1,12 +1,8 @@
 
-:fib ( n -- n' )
-	if  dup 2 <  then
-		ret
-	fi
+null "string" stoa
 
-	dup  1 - fib
-	swap 2 - fib
-	+ ;
+cpy
 
-fib 10 put
+0 get 0 #b set 0 swap set
 
+s> . .

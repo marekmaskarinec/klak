@@ -77,7 +77,7 @@ fn main() {
 			"__BIGGER____EQUAL__", "__MINUS__", "__MUL__", "__DIV__", "__MOD__", "__DIV____EQUAL__",
 			"s__BIGGER__", "cons", "dup", "swap", "rot", "tuck", "over", "mka", "get", "set",
 			"put", "len", "uncons", "num", "char", "stoa", "atos", "l__BIGGER__", "abs", "read",
-			"and"},
+			"and", "cpy", "rcpy"},
 		0, 0, 0, 0, 0, false, []int{}, list.List{}}
 
 	for p.parse_next(lexer.tok_eof, "") && !p.had_error { }	

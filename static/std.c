@@ -88,6 +88,12 @@ void kk_runtime_error(char *msg, ...) {
 	exit(1);
 }
 
+void *memdup(void *src, size_t s) {
+	void *tgt = malloc(s);
+	memcpy(tgt, src, s);
+	return tgt;
+}
+
 void kk_gcobj_inc(kk_cell *cell) {
 	if (cell->type != kk_type_gcobj)
 		return;
@@ -155,13 +161,31 @@ void kk_gcobj_dec(kk_cell *c) {
 }
 
 void kk_cell_copy(kk_cell *target, kk_cell *src) {
-	if (target->type == kk_type_gcobj)
-		kk_gcobj_dec(target);
+	*target = *src;
+	kk_gcobj *so = (kk_gcobj *)src->ptr_val;
 
-	memcpy(target, src, sizeof(kk_cell));
+	if (src->type == kk_type_gcobj) {
+		target->ptr_val = malloc(sizeof(kk_gcobj));
+		memcpy(target->ptr_val, src->ptr_val, sizeof(kk_gcobj));
+		kk_gcobj *o = (kk_gcobj *)target->ptr_val;
+		o->refs = 1;
 
-	if (src->type == kk_type_gcobj)
-		kk_gcobj_inc(src);
+		switch (o->type) {
+		case kk_type_string:
+			o->ptr_val = strdup(so->ptr_val);
+			break;
+		case kk_type_array:
+			o->ptr_val = memdup(so->ptr_val, sizeof(kk_array));
+			((kk_array *)o->ptr_val)->data = memdup(
+				((kk_array *)so->ptr_val)->data,
+				((kk_array *)so->ptr_val)->len * sizeof(kk_cell));
+			for (int i=0; i < ((kk_array *)o->ptr_val)->len; i++)
+				kk_gcobj_inc(&((kk_array *)o->ptr_val)->data[i]);
+			break;
+		case kk_type_cons:
+			o->ptr_val = memdup(so->ptr_val, sizeof(kk_cons));
+		}
+	}
 }
 
 kk_type kk_cell_abstype(kk_cell cell) {
@@ -716,6 +740,7 @@ void kk_BUILTIN_set(void) {
 
 		kk_gcobj_dec(&arr->data[index]);
 		arr->data[index] = val;
+		kk_gcobj_inc(&arr->data[index]);
 		break;
 
 	case kk_type_string:;
@@ -728,7 +753,12 @@ void kk_BUILTIN_set(void) {
 		if (index > len)
 			kk_runtime_error("Index %d out of range %d.", index, len);
 
-		PUSH(char, char, s[index]);
+		if (val.type != kk_type_char)
+			kk_runtime_error(
+				"Setting a string character with %s",
+				type_strs[val.type]);
+
+		s[index] = val.char_val;
 		break;
 
 	case kk_type_cons:;
@@ -942,3 +972,74 @@ void kk_BUILTIN_and(void) {
 	kk_gcobj_dec(&b);
 }
 
+void kk_BUILTIN_cpy(void) {
+	kk_cell *cell = stack + 1;
+
+	kk_cell_copy(cell, stack++);
+}
+
+void kk_BUILTIN_rcpy() {
+	kk_cell *cell = stack + 1;
+
+	kk_cell_copy(cell, stack);
+
+	switch (kk_cell_abstype(*cell)) {
+	case kk_type_array:;
+		kk_array
+			*aa = (kk_array *)GCOBJ(*cell)->ptr_val,
+			*ba = (kk_array *)GCOBJ(*stack)->ptr_val;
+
+		for (int i=0; i < aa->len; i++)
+			kk_cell_copy(&aa->data[i], &ba->data[i]);
+		break;
+	case kk_type_cons:
+		kk_cell_copy(&CONS(GCOBJ(*cell))->car, &CONS(GCOBJ(*stack))->car);
+		kk_cell_copy(&CONS(GCOBJ(*cell))->cdr, &CONS(GCOBJ(*stack))->cdr);
+	}
+	stack++;
+}
+
+int main() {
+	strcpy(kk_file, "test.kk");
+	kk_line = 2 ;
+	PUSH(null, char, 0);
+	{
+		kk_gcobj *tmp = malloc(sizeof(kk_gcobj));
+		if (!tmp) kk_runtime_error("Could not allocate a gc object.");
+		tmp->type = kk_type_string; tmp->refs = 1; 
+		tmp->ptr_val = malloc(7 );
+		if (!tmp->ptr_val) kk_runtime_error("Could not allocate a string.");
+		((char *)tmp->ptr_val)[6 ] = 0;
+		strcpy(tmp->ptr_val, "string");
+		PUSH(gcobj, ptr, tmp);
+	}
+
+	kk_BUILTIN_stoa();
+
+	kk_line = 4 ;
+	kk_BUILTIN_cpy();
+
+	kk_line = 6 ;
+	PUSH(float, float, 0 );
+	kk_BUILTIN_get();
+
+	PUSH(float, float, 0 );
+	PUSH(char, char, 'b' );
+	kk_BUILTIN_s__BIGGER__();
+	kk_BUILTIN_set();
+	kk_BUILTIN_s__BIGGER__();
+
+	PUSH(float, float, 0 );
+	kk_BUILTIN_swap();
+	kk_BUILTIN_set();
+
+	kk_line = 8 ;
+	kk_BUILTIN_s__BIGGER__();
+
+	kk_gcobj_dec(stack);
+	POP();
+	kk_gcobj_dec(stack);
+	POP();
+	kk_line = 9 ;
+
+}
